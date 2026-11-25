@@ -35,9 +35,10 @@ fi
 
 # Device vendorsetup.sh on blossom runs patch_camera.sh and applyPatches.sh.
 # patchelf is installed by setup-runner.sh; these hooks must run before prune.sh.
+cd "$SRC"
 if [[ -f build/envsetup.sh ]]; then
   env_log="$ROM_ROOT/envsetup-prep.log"
-  if ! (source build/envsetup.sh) >"$env_log" 2>&1; then
+  if ! (set +u; source build/envsetup.sh) >"$env_log" 2>&1; then
     tail -n 160 "$env_log" || true
     echo "::error::sourcing build/envsetup.sh failed while applying device setup hooks"
     exit 1
