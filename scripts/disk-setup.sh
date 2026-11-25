@@ -8,18 +8,23 @@ SWAP_GB="${2:-24}"
 sudo swapoff -a || true
 sudo rm -f /mnt/swapfile /swapfile || true
 
-# Do not assume /mnt has enough room for a fixed 24 GiB swap file. On some
-# hosted images /mnt shares the root filesystem, so reserve enough space for
-# the btrfs workspace before deciding how much swap can be allocated.
 ROOT_DEV="$(df --output=source / | tail -1)"
 MNT_DEV="$(df --output=source /mnt | tail -1)"
 ROOT_FREE_MB="$(df --output=avail -B1M / | tail -1)"
 MNT_FREE_MB="$(df --output=avail -B1M /mnt | tail -1)"
+
+# When / and /mnt share a filesystem, protect at least 40 GiB for the ROM
+# workspace (after leaving 5 GiB for the runner/apt/logs). Only use the
+# remaining space for disk swap. With separate filesystems, swap comes from
+# /mnt and the root workspace remains independent.
+ROOT_RESERVE_MB=5120
+MIN_WORKSPACE_MB=40960
 if [[ "$ROOT_DEV" == "$MNT_DEV" ]]; then
-  SWAP_BUDGET_MB=$((ROOT_FREE_MB - 9216))
+  SWAP_BUDGET_MB=$((ROOT_FREE_MB - ROOT_RESERVE_MB - MIN_WORKSPACE_MB))
 else
   SWAP_BUDGET_MB=$((MNT_FREE_MB - 2048))
 fi
+
 SWAP_TARGET_MB=$((SWAP_GB * 1024))
 SWAP_MB=$((SWAP_BUDGET_MB < SWAP_TARGET_MB ? SWAP_BUDGET_MB : SWAP_TARGET_MB))
 if (( SWAP_MB >= 1024 )); then
@@ -30,7 +35,7 @@ if (( SWAP_MB >= 1024 )); then
   sudo swapon -p 0 "$SWAPF"
   echo "Created ${SWAP_MB} MiB disk swap"
 else
-  echo "Skipping disk swap: insufficient free space after reserving workspace capacity"
+  echo "Skipping disk swap: workspace capacity has priority"
 fi
 
 # Optional compressed RAM swap.
@@ -58,7 +63,11 @@ if [[ "$ROOT_DEV" != "$MNT_DEV" ]]; then
   fi
 fi
 
-ROOT_IMG_MB=$((ROOT_FREE_MB - 5120))
+ROOT_IMG_MB=$((ROOT_FREE_MB - ROOT_RESERVE_MB))
+if [[ "$ROOT_DEV" == "$MNT_DEV" ]] && (( ROOT_IMG_MB < MIN_WORKSPACE_MB )); then
+  echo "Not enough space for the minimum ROM workspace: ${ROOT_IMG_MB} MiB available, ${MIN_WORKSPACE_MB} MiB required." >&2
+  exit 1
+fi
 if (( ROOT_IMG_MB < 4096 )); then
   echo "Not enough free space on / for the ROM workspace (${ROOT_IMG_MB} MiB available after reserve)." >&2
   exit 1
