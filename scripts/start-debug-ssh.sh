@@ -4,7 +4,6 @@
 set -euo pipefail
 
 SSH_USER="ci-debug"
-SSH_GROUP="runner"
 PUBLIC_KEY="${CI_SSH_PUBLIC_KEY:-}"
 
 if [[ -z "$PUBLIC_KEY" ]]; then
@@ -29,15 +28,10 @@ fi
 
 sudo apt-get install -y -qq openssh-server >/dev/null
 
-if ! getent group "$SSH_GROUP" >/dev/null; then
-  echo "::error::Expected runner group '$SSH_GROUP' was not found."
-  exit 1
-fi
-
 if ! id "$SSH_USER" >/dev/null 2>&1; then
-  sudo useradd --create-home --shell /bin/bash --groups "$SSH_GROUP" "$SSH_USER"
-else
-  sudo usermod --append --groups "$SSH_GROUP" "$SSH_USER"
+  # Do not add this account to the runner group. It gets no sudo privileges
+  # and no group-based write access to the build workspace.
+  sudo useradd --create-home --shell /bin/bash "$SSH_USER"
 fi
 
 # This account deliberately has no sudo membership and no password login.
