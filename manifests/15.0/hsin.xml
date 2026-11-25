@@ -4,7 +4,7 @@
   <remote name="Fiyuu" fetch="https://github.com/kitsunee02" />
   <remote name="gh" fetch="https://github.com" />
 
-  <project name="device_xiaomi_blossom" path="device/xiaomi/blossom" remote="Fiyuu" revision="lineage-22.2" />
+  <project name="device_xiaomi_blossom" path="device/xiaomi/blossom" remote="Fiyuu" revision="hsin" />
 
   <project name="Jayedkhan800/android_device_mediatek_sepolicy_vndr" path="device/mediatek/sepolicy_vndr" remote="gh" revision="lineage-22" />
 
