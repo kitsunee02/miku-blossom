@@ -34,6 +34,15 @@ if ! id "$SSH_USER" >/dev/null 2>&1; then
   sudo useradd --create-home --shell /bin/bash "$SSH_USER"
 fi
 
+# Grant this account read/traverse access to the ROM workspace via ACLs only.
+# The workspace is mounted before this script; src is created later by sync.sh.
+# Parent paths need traversal, and the ROM root default ACL propagates to src
+# and newly created content. This does not grant write access or sudo.
+sudo apt-get install -y -qq acl >/dev/null
+sudo setfacl -m "u:$SSH_USER:--x" /home/runner
+sudo setfacl -m "u:$SSH_USER:--x" "$ROM_ROOT"
+sudo setfacl -m "d:u:$SSH_USER:r-x" "$ROM_ROOT"
+
 # Give PAM a valid account record, but use a fresh unguessable password.
 # sshd below accepts public-key authentication only, so this password cannot be used for SSH.
 RANDOM_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')"
