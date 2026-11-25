@@ -37,7 +37,7 @@ fi
 # Give PAM a valid account record, but use a fresh unguessable password.
 # sshd below accepts public-key authentication only, so this password cannot be used for SSH.
 RANDOM_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')"
-printf '%s:%s\\n' "$SSH_USER" "$RANDOM_PASSWORD" | sudo chpasswd
+printf '%s:%s\n' "$SSH_USER" "$RANDOM_PASSWORD" | sudo chpasswd
 unset RANDOM_PASSWORD
 
 HOME_DIR="$(getent passwd "$SSH_USER" | cut -d: -f6)"
