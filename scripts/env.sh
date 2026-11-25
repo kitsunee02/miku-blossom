@@ -11,7 +11,7 @@ export HSIN_MANIFEST_URL="${HSIN_MANIFEST_URL:-https://github.com/hsin-os/manife
 export HSIN_BRANCH="${HSIN_BRANCH:-Moon_fox}"
 export DEVICE="${DEVICE:-blossom}"
 export HSIN_PRODUCT="${HSIN_PRODUCT:-hsin_blossom}"
-export LUNCH_TARGET="${LUNCH_TARGET:-hsin_blossom-userdebug}"
+export LUNCH_TARGET="${LUNCH_TARGET:-hsin_blossom-bp1a-userdebug}"
 export BUILD_TARGET="${BUILD_TARGET:-hsin}"
 export VARIANT="${VARIANT:-userdebug}"
 
