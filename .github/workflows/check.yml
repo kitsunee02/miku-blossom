@@ -34,7 +34,6 @@ jobs:
       BUILD_TARGET: nothing
       KEEP_GIT: "0"
     steps:
-      - run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
       - uses: actions/checkout@v7
         with:
           path: hsin-blossom-ci
@@ -48,7 +47,7 @@ jobs:
       - run: hsin-blossom-ci/scripts/prune.sh
       - name: Lunch and run m nothing
         run: |
-          DEADLINE=$(( JOB_START + 150 * 60 ))
+          DEADLINE=$(( $(date +%s) + 150 * 60 ))
           hsin-blossom-ci/scripts/build-stage.sh "$DEADLINE" 0 nothing
           S=$(cat "$ROM_ROOT/status" 2>/dev/null || echo failed)
           echo "### HsinOS config check: $S" >> "$GITHUB_STEP_SUMMARY"
