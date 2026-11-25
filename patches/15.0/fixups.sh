@@ -8,17 +8,33 @@ cd "${SRC:?SRC must be set to the source tree}"
 remove_path() {
   local path="$1"
   if [[ -e "$path" || -L "$path" ]]; then
-    echo "[fixups] removing conflicting/unneeded path: $path"
+    echo "[fixups] removing requested source-tree path: $path"
     rm -rf -- "$path"
   else
     echo "[fixups] already absent: $path"
   fi
 }
 
-# Resolve the hardware/lineage/interfaces power-libperfmgr namespace
-# collision with the Pixel namespace referenced by Soong.
+require_file() {
+  local path="$1"
+  if [[ ! -f "$path" ]]; then
+    echo "::error::required source file is missing: $path"
+    exit 1
+  fi
+  echo "[fixups] verified required source file: $path"
+}
+
+# Apply the three targeted source-tree removals requested for this build.
 remove_path "hardware/lineage/interfaces/sensors"
 remove_path "hardware/lineage/interfaces/biometrics/fingerprint"
 remove_path "hardware/interfaces/biometrics/fingerprint/2.1/default"
+
+# blossom/device.mk builds android.hardware.power-service.pixel-libperfmgr
+# and the Lineage power-libperfmgr namespace imports hardware/google/pixel.
+# The base Hsin manifest removes that AOSP project, so manifests/15.0/hsin.xml
+# restores it. Fail here, before Soong, if the project was not synced.
+require_file "hardware/google/interfaces/Android.bp"
+require_file "hardware/google/pixel/Android.bp"
+require_file "hardware/google/pixel/power-libperfmgr/Android.bp"
 
 echo "[fixups] completed Android 15 source-tree fixups"
