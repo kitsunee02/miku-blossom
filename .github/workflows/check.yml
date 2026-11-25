@@ -13,6 +13,10 @@ on:
         type: string
         default: "hsin_blossom-userdebug"
         required: true
+      debug_terminal:
+        description: "Enable private SSH terminal while checking configuration (requires Tailscale secrets)"
+        type: boolean
+        default: false
   push:
     paths:
       - "manifests/**"
@@ -37,11 +41,36 @@ jobs:
       - uses: actions/checkout@v7
         with:
           path: hsin-blossom-ci
+      - name: Validate private terminal configuration
+        if: inputs.debug_terminal
+        env:
+          TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+          CI_SSH_PUBLIC_KEY: ${{ secrets.CI_SSH_PUBLIC_KEY }}
+        run: |
+          [[ -n "$TS_OAUTH_CLIENT_ID" ]] || { echo "::error::Missing repository secret TS_OAUTH_CLIENT_ID"; exit 1; }
+          [[ -n "$TS_OAUTH_SECRET" ]] || { echo "::error::Missing repository secret TS_OAUTH_SECRET"; exit 1; }
+          [[ -n "$CI_SSH_PUBLIC_KEY" ]] || { echo "::error::Missing repository secret CI_SSH_PUBLIC_KEY"; exit 1; }
       - run: hsin-blossom-ci/scripts/free-space.sh
       - run: hsin-blossom-ci/scripts/disk-setup.sh /home/runner/rom 24
       - run: |
           hsin-blossom-ci/scripts/setup-runner.sh
           echo "REPO_DIR=$GITHUB_WORKSPACE/hsin-blossom-ci" >> "$GITHUB_ENV"
+      - name: Join private Tailscale network
+        if: inputs.debug_terminal
+        uses: tailscale/github-action@064b10558093f38325e838ddea35486bdc6b1d5c # v4.4.0
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          hostname: hsin-blossom-${{ github.run_id }}-check
+
+      - name: Start read-only private SSH terminal
+        if: inputs.debug_terminal
+        env:
+          CI_SSH_PUBLIC_KEY: ${{ secrets.CI_SSH_PUBLIC_KEY }}
+          STAGE: check
+        run: hsin-blossom-ci/scripts/start-debug-ssh.sh
       - run: hsin-blossom-ci/scripts/sync.sh
       - run: hsin-blossom-ci/scripts/apply-patches.sh
       - run: hsin-blossom-ci/scripts/prune.sh
