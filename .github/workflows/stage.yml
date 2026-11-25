@@ -86,7 +86,7 @@ jobs:
         env:
           CI_SSH_PUBLIC_KEY: ${{ secrets.CI_SSH_PUBLIC_KEY }}
           STAGE: ${{ inputs.stage }}
-        run: hsin-blossom-ci/scripts/start-debug-ssh.sh
+        run: bash hsin-blossom-ci/scripts/start-debug-ssh.sh
 
       - name: Download previous out/
         if: inputs.stage > 1
