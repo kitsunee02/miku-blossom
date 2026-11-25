@@ -80,7 +80,7 @@ The build and configuration-check workflows can expose a temporary SSH terminal 
    | `TS_OAUTH_SECRET` | Tailscale OAuth client secret |
    | `CI_SSH_PUBLIC_KEY` | Contents of `~/.ssh/miku-blossom-ci.pub` |
 
-   Never upload the private key (`~/.ssh/miku-blossom` without `.pub`) to GitHub.
+   Never upload the private key (`~/.ssh/miku-blossom-ci` without `.pub`) to GitHub.
 
 ### Start a terminal
 
