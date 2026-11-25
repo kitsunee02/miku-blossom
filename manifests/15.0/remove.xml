@@ -11,6 +11,4 @@
   <remove-project path="prebuilts/abi-dumps/platform" />
   <remove-project path="prebuilts/abi-dumps/vndk" />
   <remove-project path="prebuilts/remoteexecution-client" />
-  <remove-project path="external/crosvm"  />
-  <remove-project path="packages/modules/Virtualization"  />
 </manifest>
