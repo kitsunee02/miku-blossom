@@ -83,8 +83,12 @@ sudo /usr/sbin/sshd -t
 sudo systemctl restart ssh
 sudo systemctl is-active --quiet ssh
 
-if ! sudo ss -lnt | grep -F "$TAILSCALE_IP:22" >/dev/null; then
-  echo "::error::SSH is not listening on the Tailscale address."
+LISTENERS="$(sudo ss -H -lnt 'sport = :22' 2>&1 || true)"
+echo "$LISTENERS"
+if ! printf '%s\n' "$LISTENERS" | awk -v ip="$TAILSCALE_IP" '$4 == ip ":22" || index($4, ip) == 1 { found=1 } END { exit !found }'; then
+  echo "::error::SSH is not listening on the Tailscale address. Diagnostic listener list above."
+  sudo systemctl status ssh --no-pager || true
+  sudo journalctl -u ssh --no-pager -n 60 || true
   exit 1
 fi
 
