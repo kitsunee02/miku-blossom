@@ -1,0 +1,120 @@
+name: Build HsinOS Android 15 (blossom)
+
+on:
+  workflow_dispatch:
+    inputs:
+      hsin_branch:
+        description: "HsinOS manifest branch"
+        type: string
+        default: "Moon_fox"
+        required: true
+      lunch_target:
+        description: "Full lunch combo"
+        type: string
+        default: "hsin_blossom-bp1a-userdebug"
+        required: true
+      build_target:
+        description: "Make target (HsinOS manifest README uses hsin)"
+        type: string
+        default: "hsin"
+        required: true
+      keep_git:
+        description: "Keep .repo project object databases (uses more disk)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hsin-blossom-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  stage1:
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 1
+      hsin_branch: ${{ inputs.hsin_branch }}
+      lunch_target: ${{ inputs.lunch_target }}
+      build_target: ${{ inputs.build_target }}
+      keep_git: ${{ inputs.keep_git }}
+  stage2:
+    needs: stage1
+    if: needs.stage1.outputs.done != 'true'
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 2
+      hsin_branch: ${{ inputs.hsin_branch }}
+      lunch_target: ${{ inputs.lunch_target }}
+      build_target: ${{ inputs.build_target }}
+      keep_git: ${{ inputs.keep_git }}
+  stage3:
+    needs: stage2
+    if: needs.stage2.outputs.done != 'true'
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 3
+      hsin_branch: ${{ inputs.hsin_branch }}
+      lunch_target: ${{ inputs.lunch_target }}
+      build_target: ${{ inputs.build_target }}
+      keep_git: ${{ inputs.keep_git }}
+  stage4:
+    needs: stage3
+    if: needs.stage3.outputs.done != 'true'
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 4
+      hsin_branch: ${{ inputs.hsin_branch }}
+      lunch_target: ${{ inputs.lunch_target }}
+      build_target: ${{ inputs.build_target }}
+      keep_git: ${{ inputs.keep_git }}
+  stage5:
+    needs: stage4
+    if: needs.stage4.outputs.done != 'true'
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 5
+      hsin_branch: ${{ inputs.hsin_branch }}
+      lunch_target: ${{ inputs.lunch_target }}
+      build_target: ${{ inputs.build_target }}
+      keep_git: ${{ inputs.keep_git }}
+  stage6:
+    needs: stage5
+    if: needs.stage5.outputs.done != 'true'
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 6
+      hsin_branch: ${{ inputs.hsin_branch }}
+      lunch_target: ${{ inputs.lunch_target }}
+      build_target: ${{ inputs.build_target }}
+      keep_git: ${{ inputs.keep_git }}
+  stage7:
+    needs: stage6
+    if: needs.stage6.outputs.done != 'true'
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 7
+      hsin_branch: ${{ inputs.hsin_branch }}
+      lunch_target: ${{ inputs.lunch_target }}
+      build_target: ${{ inputs.build_target }}
+      keep_git: ${{ inputs.keep_git }}
+  stage8:
+    needs: stage7
+    if: needs.stage7.outputs.done != 'true'
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 8
+      hsin_branch: ${{ inputs.hsin_branch }}
+      lunch_target: ${{ inputs.lunch_target }}
+      build_target: ${{ inputs.build_target }}
+      keep_git: ${{ inputs.keep_git }}
+
+  incomplete:
+    needs: stage8
+    if: needs.stage8.result == 'success' && needs.stage8.outputs.done != 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |
+          echo "::error::HsinOS did not finish within 8 build stages. The final out/ artifact is available as out-stage-8."
+          exit 1
