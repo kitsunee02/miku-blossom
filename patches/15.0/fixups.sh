@@ -87,6 +87,7 @@ remove_path "hardware/lineage/interfaces/power-libperfmgr"
 # ROM manifest omits gfxstream, so disable the rutabaga_gfx gfxstream target
 # instead of dropping external/crosvm (needed by Virtualization/crosvm_defaults).
 disable_soong_module "external/crosvm/rutabaga_gfx/Android.bp" "librutabaga_gfx_gfxstream"
+disable_soong_module "external/crosvm/rutabaga_gfx/kumquat/server/Android.bp" "kumquat"
 
 # blossom/device.mk still builds android.hardware.power-service.pixel-libperfmgr
 # from hardware/google/pixel, which manifests/15.0/hsin.xml restores.
