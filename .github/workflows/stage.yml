@@ -8,6 +8,7 @@ on:
       lunch_target: { type: string, required: true }
       build_target: { type: string, required: true }
       keep_git: { type: boolean, required: false, default: false }
+      debug_terminal: { type: boolean, required: false, default: false }
       build_minutes: { type: number, required: false, default: 300 }
     outputs:
       done:
@@ -52,6 +53,33 @@ jobs:
         run: |
           hsin-blossom-ci/scripts/setup-runner.sh
           echo "REPO_DIR=$GITHUB_WORKSPACE/hsin-blossom-ci" >> "$GITHUB_ENV"
+
+      - name: Validate private terminal configuration
+        if: inputs.debug_terminal
+        env:
+          TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+          CI_SSH_PUBLIC_KEY: ${{ secrets.CI_SSH_PUBLIC_KEY }}
+        run: |
+          [[ -n "$TS_OAUTH_CLIENT_ID" ]] || { echo "::error::Missing repository secret TS_OAUTH_CLIENT_ID"; exit 1; }
+          [[ -n "$TS_OAUTH_SECRET" ]] || { echo "::error::Missing repository secret TS_OAUTH_SECRET"; exit 1; }
+          [[ -n "$CI_SSH_PUBLIC_KEY" ]] || { echo "::error::Missing repository secret CI_SSH_PUBLIC_KEY"; exit 1; }
+
+      - name: Join private Tailscale network
+        if: inputs.debug_terminal
+        uses: tailscale/github-action@064b10558093f38325e838ddea35486bdc6b1d5c # v4.4.0
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          hostname: hsin-blossom-${{ github.run_id }}-s${{ inputs.stage }}
+
+      - name: Start read-only private SSH terminal
+        if: inputs.debug_terminal
+        env:
+          CI_SSH_PUBLIC_KEY: ${{ secrets.CI_SSH_PUBLIC_KEY }}
+          STAGE: ${{ inputs.stage }}
+        run: hsin-blossom-ci/scripts/start-debug-ssh.sh
 
       - name: Download previous out/
         if: inputs.stage > 1
