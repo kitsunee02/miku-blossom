@@ -14,6 +14,10 @@
 
   <project path="hardware/mediatek" name="AsTechpro20/android_hardware_mediatek" remote="gh" revision="lineage-22.2" />
 
+  <!-- blossom is a phone product, not Android Automotive; remove the
+       leftover Car services tree whose RROs depend on the pruned Car apps. -->
+  <remove-project name="platform/packages/services/Car" />
+
   <!-- Required by blossom's pixel-libperfmgr power HAL and Lineage power namespace.
        The base manifest's remove.xml excludes this AOSP project; restore it here. -->
   <project path="hardware/google/pixel" name="platform/hardware/google/pixel" remote="aosp" />
