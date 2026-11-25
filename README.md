@@ -57,6 +57,50 @@ The CI installs `patchelf` and sources `build/envsetup.sh` before pruning `.repo
 
 The collector looks for the final `*.zip` produced by Hsin's `m hsin` target (whose make rule renames the OTA package to `$(PROD_VERSION).zip`) and also collects selected images and checksums.
 
+## Private interactive terminal (optional)
+
+The build and configuration-check workflows can expose a temporary SSH terminal on the runner through your private Tailscale network. It is disabled by default. It does not use the public tmate relay.
+
+### One-time setup
+
+1. In your Tailscale admin console, create the `tag:ci` tag.
+2. Create a Tailscale OAuth client restricted to `tag:ci`, with **Devices: Core: Write** and **Keys: Auth Keys: Write** permissions. Store the client ID and secret only in GitHub Actions secrets.
+3. Add a Tailscale access grant allowing your own Tailscale identity to reach `tag:ci` on **TCP port 22 only**. Do not grant general access to the whole tailnet just for this workflow.
+4. On your computer, create a separate SSH key pair:
+
+   ```bash
+   ssh-keygen -t ed25519 -a 64 -f ~/.ssh/miku-blossom-ci -C miku-blossom-ci
+   ```
+
+5. In **GitHub → miku-blossom → Settings → Secrets and variables → Actions → New repository secret**, add:
+
+   | Secret name | Value |
+   |---|---|
+   | `TS_OAUTH_CLIENT_ID` | Tailscale OAuth client ID |
+   | `TS_OAUTH_SECRET` | Tailscale OAuth client secret |
+   | `CI_SSH_PUBLIC_KEY` | Contents of `~/.ssh/miku-blossom-ci.pub` |
+
+   Never upload the private key (`~/.ssh/miku-blossom` without `.pub`) to GitHub.
+
+### Start a terminal
+
+1. Start **Build HsinOS Android 15 (blossom)** or **Check HsinOS configuration (blossom)**.
+2. Set **Enable private SSH terminal** to `true`.
+3. Open the running stage job's **Summary**. The **Private interactive terminal** section shows its temporary Tailscale IP.
+4. Make sure your computer is connected to the same tailnet, then connect:
+
+   ```bash
+   ssh -i ~/.ssh/miku-blossom-ci ci-debug@100.x.y.z
+   ```
+
+   Replace `100.x.y.z` with the address shown in that stage's Summary.
+
+On Arch Linux, install and start Tailscale once with `sudo pacman -S tailscale`, `sudo systemctl enable --now tailscaled`, and `sudo tailscale up`.
+
+The SSH account is intentionally separate from the Actions runner account: it has no sudo access and is not a member of the runner group. It can inspect world-readable workspace files but is not granted the runner account's group permissions. The SSH daemon listens only on the private Tailscale IPv4 address, with public-key authentication only.
+
+Each build stage gets a fresh runner and a different temporary Tailscale address. The terminal stops when that stage ends. Keep the debug option off for normal runs. While compilation is running, use the terminal for inspection; do not manually change source files, touch build outputs, kill build processes, or run cleanup commands in the shared workspace.
+
 ## Important limitations
 
 - The workflows and scripts are adapted from the current public `kilib1k/crdroid-ice` builder and Hsin's public build files. They have **not** been executed against a full Android source checkout, so a successful ROM build is not guaranteed until the `check.yml` workflow passes.
