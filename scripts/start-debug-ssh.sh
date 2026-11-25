@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Start a read-only SSH account bound only to the runner's Tailscale IPv4.
-# The account has no sudo access and can read the runner workspace via group "runner".
+# The account has no sudo access and uses only normal world-readable workspace permissions.
 set -euo pipefail
 
 SSH_USER="ci-debug"
