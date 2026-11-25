@@ -80,6 +80,11 @@ EOF
 
 sudo mkdir -p /run/sshd
 sudo /usr/sbin/sshd -t
+
+# Ubuntu may use systemd socket activation, which opens SSH on wildcard
+# addresses and overrides sshd's ListenAddress. Disable it for this ephemeral runner.
+sudo systemctl stop ssh.socket || true
+sudo systemctl mask --runtime ssh.socket
 sudo systemctl restart ssh
 sudo systemctl is-active --quiet ssh
 
