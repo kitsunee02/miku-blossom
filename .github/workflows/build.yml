@@ -22,6 +22,10 @@ on:
         description: "Keep .repo project object databases (uses more disk)"
         type: boolean
         default: false
+      debug_terminal:
+        description: "Enable private SSH terminal on each stage (requires Tailscale secrets)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -39,6 +43,8 @@ jobs:
       lunch_target: ${{ inputs.lunch_target }}
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
+      debug_terminal: ${{ inputs.debug_terminal }}
+    secrets: inherit
   stage2:
     needs: stage1
     if: needs.stage1.outputs.done != 'true'
@@ -49,6 +55,8 @@ jobs:
       lunch_target: ${{ inputs.lunch_target }}
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
+      debug_terminal: ${{ inputs.debug_terminal }}
+    secrets: inherit
   stage3:
     needs: stage2
     if: needs.stage2.outputs.done != 'true'
@@ -59,6 +67,8 @@ jobs:
       lunch_target: ${{ inputs.lunch_target }}
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
+      debug_terminal: ${{ inputs.debug_terminal }}
+    secrets: inherit
   stage4:
     needs: stage3
     if: needs.stage3.outputs.done != 'true'
@@ -69,6 +79,8 @@ jobs:
       lunch_target: ${{ inputs.lunch_target }}
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
+      debug_terminal: ${{ inputs.debug_terminal }}
+    secrets: inherit
   stage5:
     needs: stage4
     if: needs.stage4.outputs.done != 'true'
@@ -79,6 +91,8 @@ jobs:
       lunch_target: ${{ inputs.lunch_target }}
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
+      debug_terminal: ${{ inputs.debug_terminal }}
+    secrets: inherit
   stage6:
     needs: stage5
     if: needs.stage5.outputs.done != 'true'
@@ -89,6 +103,8 @@ jobs:
       lunch_target: ${{ inputs.lunch_target }}
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
+      debug_terminal: ${{ inputs.debug_terminal }}
+    secrets: inherit
   stage7:
     needs: stage6
     if: needs.stage6.outputs.done != 'true'
@@ -99,6 +115,8 @@ jobs:
       lunch_target: ${{ inputs.lunch_target }}
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
+      debug_terminal: ${{ inputs.debug_terminal }}
+    secrets: inherit
   stage8:
     needs: stage7
     if: needs.stage7.outputs.done != 'true'
@@ -109,6 +127,8 @@ jobs:
       lunch_target: ${{ inputs.lunch_target }}
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
+      debug_terminal: ${{ inputs.debug_terminal }}
+    secrets: inherit
 
   incomplete:
     needs: stage8
