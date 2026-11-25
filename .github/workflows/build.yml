@@ -44,7 +44,10 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
-    secrets: inherit
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+      CI_SSH_PUBLIC_KEY: ${{ secrets.CI_SSH_PUBLIC_KEY }}
   stage2:
     needs: stage1
     if: needs.stage1.outputs.done != 'true'
@@ -56,7 +59,10 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
-    secrets: inherit
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+      CI_SSH_PUBLIC_KEY: ${{ secrets.CI_SSH_PUBLIC_KEY }}
   stage3:
     needs: stage2
     if: needs.stage2.outputs.done != 'true'
@@ -68,7 +74,10 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
-    secrets: inherit
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+      CI_SSH_PUBLIC_KEY: ${{ secrets.CI_SSH_PUBLIC_KEY }}
   stage4:
     needs: stage3
     if: needs.stage3.outputs.done != 'true'
@@ -80,7 +89,10 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
-    secrets: inherit
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+      CI_SSH_PUBLIC_KEY: ${{ secrets.CI_SSH_PUBLIC_KEY }}
   stage5:
     needs: stage4
     if: needs.stage4.outputs.done != 'true'
@@ -92,7 +104,10 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
-    secrets: inherit
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+      CI_SSH_PUBLIC_KEY: ${{ secrets.CI_SSH_PUBLIC_KEY }}
   stage6:
     needs: stage5
     if: needs.stage5.outputs.done != 'true'
@@ -104,7 +119,10 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
-    secrets: inherit
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+      CI_SSH_PUBLIC_KEY: ${{ secrets.CI_SSH_PUBLIC_KEY }}
   stage7:
     needs: stage6
     if: needs.stage6.outputs.done != 'true'
@@ -116,7 +134,10 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
-    secrets: inherit
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+      CI_SSH_PUBLIC_KEY: ${{ secrets.CI_SSH_PUBLIC_KEY }}
   stage8:
     needs: stage7
     if: needs.stage7.outputs.done != 'true'
@@ -128,7 +149,10 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
-    secrets: inherit
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+      CI_SSH_PUBLIC_KEY: ${{ secrets.CI_SSH_PUBLIC_KEY }}
 
   incomplete:
     needs: stage8
