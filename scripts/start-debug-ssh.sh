@@ -81,12 +81,16 @@ EOF
 sudo mkdir -p /run/sshd
 sudo /usr/sbin/sshd -t
 
-# Ubuntu may use systemd socket activation, which opens SSH on wildcard
-# addresses and overrides sshd's ListenAddress. Disable it for this ephemeral runner.
+# Ubuntu may use systemd socket activation. Stop and disable it (without masking),
+# then run ssh.service directly so sshd honors the Tailscale-only ListenAddress.
+# Masking ssh.socket can break ssh.service dependencies on some runner images.
 sudo systemctl stop ssh.socket || true
-sudo systemctl mask --runtime ssh.socket
-sudo systemctl restart ssh
-sudo systemctl is-active --quiet ssh
+sudo systemctl unmask ssh.socket || true
+sudo systemctl disable ssh.socket || true
+sudo systemctl stop ssh.service || true
+sudo systemctl daemon-reload
+sudo systemctl restart ssh.service
+sudo systemctl is-active --quiet ssh.service
 
 LISTENERS="$(sudo ss -H -lnt 'sport = :22' 2>&1 || true)"
 echo "$LISTENERS"
