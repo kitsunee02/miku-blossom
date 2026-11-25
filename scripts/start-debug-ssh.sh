@@ -34,8 +34,11 @@ if ! id "$SSH_USER" >/dev/null 2>&1; then
   sudo useradd --create-home --shell /bin/bash "$SSH_USER"
 fi
 
-# This account deliberately has no sudo membership and no password login.
-sudo passwd --lock "$SSH_USER" >/dev/null 2>&1 || true
+# Give PAM a valid account record, but use a fresh unguessable password.
+# sshd below accepts public-key authentication only, so this password cannot be used for SSH.
+RANDOM_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')"
+printf '%s:%s\\n' "$SSH_USER" "$RANDOM_PASSWORD" | sudo chpasswd
+unset RANDOM_PASSWORD
 
 HOME_DIR="$(getent passwd "$SSH_USER" | cut -d: -f6)"
 if [[ -z "$HOME_DIR" || ! -d "$HOME_DIR" ]]; then
@@ -80,7 +83,7 @@ sudo /usr/sbin/sshd -t
 sudo systemctl restart ssh
 sudo systemctl is-active --quiet ssh
 
-if ! sudo ss -lnt | grep -Fq "$TAILSCALE_IP:22"; then
+if ! sudo ss -lnt | grep -F "$TAILSCALE_IP:22" >/dev/null; then
   echo "::error::SSH is not listening on the Tailscale address."
   exit 1
 fi
