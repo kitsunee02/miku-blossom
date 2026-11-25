@@ -1,0 +1,164 @@
+name: HsinOS build stage
+
+on:
+  workflow_call:
+    inputs:
+      stage: { type: number, required: true }
+      hsin_branch: { type: string, required: true }
+      lunch_target: { type: string, required: true }
+      build_target: { type: string, required: true }
+      keep_git: { type: boolean, required: false, default: false }
+      build_minutes: { type: number, required: false, default: 300 }
+    outputs:
+      done:
+        description: "true when the HsinOS ZIP was built"
+        value: ${{ jobs.build.outputs.done }}
+
+jobs:
+  build:
+    name: stage ${{ inputs.stage }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 355
+    outputs:
+      done: ${{ steps.result.outputs.done }}
+    env:
+      ROM_ROOT: /home/runner/rom
+      ROM_VERSION: "15.0"
+      DEVICE: blossom
+      HSIN_BRANCH: ${{ inputs.hsin_branch }}
+      LUNCH_TARGET: ${{ inputs.lunch_target }}
+      BUILD_TARGET: ${{ inputs.build_target }}
+      KEEP_GIT: ${{ inputs.keep_git && '1' || '0' }}
+      STAGE: ${{ inputs.stage }}
+
+    steps:
+      - name: Record job start
+        id: meta
+        run: |
+          echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+          echo "prev=$(( ${{ inputs.stage }} - 1 ))" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        with:
+          path: hsin-blossom-ci
+
+      - name: Free runner space
+        run: hsin-blossom-ci/scripts/free-space.sh
+
+      - name: Create compressed workspace and swap
+        run: hsin-blossom-ci/scripts/disk-setup.sh /home/runner/rom 24
+
+      - name: Install Android build dependencies
+        run: |
+          hsin-blossom-ci/scripts/setup-runner.sh
+          echo "REPO_DIR=$GITHUB_WORKSPACE/hsin-blossom-ci" >> "$GITHUB_ENV"
+
+      - name: Download previous out/
+        if: inputs.stage > 1
+        uses: actions/download-artifact@v8
+        with:
+          name: out-stage-${{ steps.meta.outputs.prev }}
+          path: /home/runner/rom/parts
+
+      - name: Download pinned manifest
+        if: inputs.stage > 1
+        uses: actions/download-artifact@v8
+        with:
+          name: pinned-manifest
+          path: /home/runner/rom/manifest
+
+      - name: Restore out/
+        if: inputs.stage > 1
+        run: hsin-blossom-ci/scripts/unpack-out.sh
+
+      - name: Repo sync
+        run: |
+          if [[ "$STAGE" -gt 1 ]]; then
+            hsin-blossom-ci/scripts/sync.sh "$ROM_ROOT/manifest/pinned.xml"
+          else
+            hsin-blossom-ci/scripts/sync.sh
+          fi
+
+      - name: Upload pinned manifest
+        if: inputs.stage == 1
+        uses: actions/upload-artifact@v7
+        with:
+          name: pinned-manifest
+          path: /home/runner/rom/pinned.xml
+          retention-days: 7
+
+      - name: Apply patches, Hsin product overlay and device hooks
+        run: hsin-blossom-ci/scripts/apply-patches.sh
+
+      - name: Prune source checkout
+        run: hsin-blossom-ci/scripts/prune.sh
+
+      - name: Build with stage deadline
+        run: |
+          DEADLINE=$(( JOB_START + ${{ inputs.build_minutes }} * 60 ))
+          RESUMED=0
+          [[ "$STAGE" -gt 1 ]] && RESUMED=1
+          hsin-blossom-ci/scripts/build-stage.sh "$DEADLINE" "$RESUMED" "$BUILD_TARGET"
+
+      - name: Record stage result
+        id: result
+        run: |
+          S=$(cat "$ROM_ROOT/status" 2>/dev/null || echo failed)
+          echo "status=$S" >> "$GITHUB_OUTPUT"
+          if [[ "$S" == done ]]; then echo "done=true" >> "$GITHUB_OUTPUT"; else echo "done=false" >> "$GITHUB_OUTPUT"; fi
+          echo "### HsinOS stage $STAGE: $S" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload build error logs
+        if: steps.result.outputs.status == 'failed' || failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: error-log-stage-${{ inputs.stage }}
+          path: |
+            /home/runner/rom/src/out/error.log
+            /home/runner/rom/src/out/soong.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Fail on build error
+        if: steps.result.outputs.status == 'failed'
+        run: |
+          tail -n 200 "$ROM_ROOT/src/out/error.log" 2>/dev/null || true
+          echo "::error::HsinOS build failed. See error-log-stage-$STAGE."
+          exit 1
+
+      - name: Pack out/ for next stage
+        if: steps.result.outputs.status == 'timeout'
+        run: hsin-blossom-ci/scripts/pack-out.sh
+
+      - name: Upload out/ for next stage
+        if: steps.result.outputs.status == 'timeout'
+        uses: actions/upload-artifact@v7
+        with:
+          name: out-stage-${{ inputs.stage }}
+          path: /home/runner/rom/parts
+          compression-level: 0
+          retention-days: 2
+
+      - name: Collect HsinOS package
+        if: steps.result.outputs.status == 'done'
+        run: hsin-blossom-ci/scripts/collect.sh
+
+      - name: Upload HsinOS ROM artifact
+        if: steps.result.outputs.status == 'done'
+        uses: actions/upload-artifact@v7
+        with:
+          name: HsinOS-Android15-blossom
+          path: /home/runner/rom/release
+          compression-level: 0
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        if: steps.result.outputs.status == 'done'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="hsin-android15-blossom-$(date -u +%Y%m%d)-${GITHUB_RUN_ID}"
+          gh release create "$TAG" "$ROM_ROOT"/release/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "HsinOS Android 15 for Redmi 9A (blossom) - $(date -u +%Y-%m-%d)" \
+            --notes "Unofficial test build for blossom. Built from HsinOS manifest branch ${HSIN_BRANCH}, lunch target ${LUNCH_TARGET}. Back up device data and critical partitions before flashing."

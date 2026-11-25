@@ -1,0 +1,46 @@
+name: Diagnose HsinOS source disk usage
+
+on:
+  workflow_dispatch:
+    inputs:
+      hsin_branch:
+        description: "HsinOS manifest branch"
+        type: string
+        default: "Moon_fox"
+        required: true
+
+jobs:
+  diag:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 210
+    env:
+      ROM_ROOT: /home/runner/rom
+      ROM_VERSION: "15.0"
+      DEVICE: blossom
+      HSIN_BRANCH: ${{ inputs.hsin_branch }}
+      LUNCH_TARGET: hsin_blossom-bp1a-userdebug
+      BUILD_TARGET: hsin
+      KEEP_GIT: "1"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: hsin-blossom-ci
+      - run: hsin-blossom-ci/scripts/free-space.sh
+      - run: hsin-blossom-ci/scripts/disk-setup.sh /home/runner/rom 24
+      - run: |
+          hsin-blossom-ci/scripts/setup-runner.sh
+          echo "REPO_DIR=$GITHUB_WORKSPACE/hsin-blossom-ci" >> "$GITHUB_ENV"
+      - run: hsin-blossom-ci/scripts/sync.sh
+      - name: Disk inventory
+        if: always()
+        run: |
+          cd /home/runner/rom/src
+          df -h .
+          echo "== .repo"
+          du -sh .repo .repo/* 2>/dev/null || true
+          echo "== largest project objects"
+          du -s .repo/project-objects/* .repo/project-objects/*/* 2>/dev/null | sort -rn | head -40 || true
+          echo "== largest checkout directories"
+          for d in prebuilts prebuilts/* prebuilts/*/* prebuilts/clang/host/linux-x86/* external/* kernel/* device/*/* cts packages/*; do
+            [ -d "$d" ] && du -s --apparent-size --exclude=.git "$d"
+          done 2>/dev/null | sort -rn | head -80 || true
