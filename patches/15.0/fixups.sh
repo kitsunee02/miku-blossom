@@ -28,7 +28,7 @@ require_file() {
 remove_path "hardware/lineage/interfaces/sensors"
 remove_path "hardware/lineage/interfaces/biometrics/fingerprint"
 remove_path "hardware/interfaces/biometrics/fingerprint/2.1/default"
- 
+remove_path "platform_testing/tools/automotive" 
 # Lineage's power-libperfmgr namespace imports hardware/google/pixel, which
 # Soong cannot resolve in this tree ("namespace hardware/google/pixel does not
 # exist"). blossom does not use that Lineage HAL, so drop it before Soong parses
