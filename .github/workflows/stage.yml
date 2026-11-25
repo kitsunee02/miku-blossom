@@ -87,7 +87,7 @@ jobs:
           path: /home/runner/rom/pinned.xml
           retention-days: 7
 
-      - name: Apply patches, Hsin product overlay and device hooks
+      - name: Apply patches and device hooks
         run: hsin-blossom-ci/scripts/apply-patches.sh
 
       - name: Prune source checkout
