@@ -102,16 +102,13 @@ if ! printf '%s\n' "$LISTENERS" | awk -v ip="$TAILSCALE_IP" '$4 == ip ":22" || i
 fi
 
 {
-  echo "## Private interactive terminal"
-  echo
-  echo "- Stage: `$STAGE`"
-  echo "- Tailscale address: `$TAILSCALE_IP`"
-  echo "- SSH account: `$SSH_USER` (no sudo; workspace read access only)"
-  echo "- Connect from a device on the same tailnet:"
-  echo
-  echo "  `ssh -i ~/.ssh/miku-blossom-ci $SSH_USER@$TAILSCALE_IP`"
-  echo
-  echo "This address is reachable only through your Tailscale network. The terminal closes when this stage ends."
+  printf '%s\n' '## Private interactive terminal' ''
+  printf -- '- Stage: `%s`\n' "$STAGE"
+  printf -- '- Tailscale address: `%s`\n' "$TAILSCALE_IP"
+  printf -- '- SSH account: `%s` (no sudo; workspace read access only)\n' "$SSH_USER"
+  printf '%s\n' '- Connect from a device on the same tailnet:' ''
+  printf '  `ssh -i ~/.ssh/miku-blossom-ci %s@%s`\n' "$SSH_USER" "$TAILSCALE_IP"
+  printf '%s\n' '' 'This address is reachable only through your Tailscale network. The terminal closes when this stage ends.'
 } >> "$GITHUB_STEP_SUMMARY"
 
 echo "::notice title=Private SSH terminal::SSH is listening on the private Tailscale address $TAILSCALE_IP as $SSH_USER."
