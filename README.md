@@ -9,7 +9,7 @@ A device-specific, staged GitHub Actions build setup adapted from `kilib1k/crdro
 | ROM manifest | `https://github.com/hsin-os/manifest.git` |
 | ROM branch | `Moon_fox` |
 | Android base | `android-15.0.0_r32` (AOSP build ID `BP1A.250505.005`) |
-| Device tree | `kitsunee02/device_xiaomi_blossom` |
+| Device tree | `kitsunee02/device_xiaomi_blossom`, `hsin` |
 | Vendor blobs | `kitsunee02/proprietary_vendor_xiaomi_blossom` |
 | MTK sepolicy | `Jayedkhan800/android_device_mediatek_sepolicy_vndr` |
 | MTK HAL | `AsTechpro20/android_hardware_mediatek` |
@@ -25,18 +25,18 @@ The Hsin manifest's `default.xml` already includes `snippets/remove.xml`, `snipp
 
 The CI does not generate, replace, or adapt any device-tree product files. The product makefiles, `AndroidProducts.mk`, lunch choices, and Hsin-specific device configuration must come from the device tree synced by `manifests/15.0/hsin.xml`.
 
-The default lunch input is `hsin_blossom-bp1a-userdebug`. Change it in **Actions → Build HsinOS Android 15 (blossom) → Run workflow** to exactly match the lunch combo provided by your device tree. The CI will use that tree as checked out; it will not overlay a CI-made product definition on top of it.
+The device tree is synced from the `hsin` branch. It exports `hsin_blossom-user`, `hsin_blossom-userdebug`, and `hsin_blossom-eng`; the CI defaults to `hsin_blossom-userdebug`. Change it in **Actions → Build HsinOS Android 15 (blossom) → Run workflow** to exactly match the lunch combo provided by your device tree. The CI will use that tree as checked out; it will not overlay a CI-made product definition on top of it.
 
 ## Build
 
 1. Open **Actions → Build HsinOS Android 15 (blossom) → Run workflow**.
 2. Defaults:
    - Hsin manifest branch: `Moon_fox`
-   - Lunch: `hsin_blossom-bp1a-userdebug`
+   - Lunch: `hsin_blossom-userdebug`
    - Build target: `hsin`
 3. The workflow syncs sources, resolves Hsin roomservice dependencies, re-syncs the expanded manifest, pins every project revision, applies optional CI patches/overrides, runs the device `vendorsetup.sh` hooks, then builds in up to eight stages.
 
-The `bp1a` release selection corresponds to the supplied AOSP tag's build ID `BP1A.250505.005`. Use the lunch input to select the combo actually exported by your device tree.
+Use the lunch input to select a combo actually exported by your device tree.
 
 ## Workflows
 
