@@ -70,7 +70,7 @@ jobs:
         env:
           CI_SSH_PUBLIC_KEY: ${{ secrets.CI_SSH_PUBLIC_KEY }}
           STAGE: check
-        run: hsin-blossom-ci/scripts/start-debug-ssh.sh
+        run: bash hsin-blossom-ci/scripts/start-debug-ssh.sh
       - run: hsin-blossom-ci/scripts/sync.sh
       - run: hsin-blossom-ci/scripts/apply-patches.sh
       - run: hsin-blossom-ci/scripts/prune.sh
