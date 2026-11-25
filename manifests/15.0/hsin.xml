@@ -22,6 +22,23 @@
        The base manifest's remove.xml excludes this AOSP project; restore it here. -->
   <project path="hardware/google/pixel" name="platform/hardware/google/pixel" remote="aosp" />
 
+  <!-- Restore AOSP support projects that still provide modules/namespaces
+       referenced by other retained Android 15 source trees. -->
+  <!-- Cuttlefish module definitions are referenced outside its device tree. -->
+  <project path="device/google/cuttlefish" name="device/google/cuttlefish" remote="aosp" />
+  <project path="device/google/cuttlefish_prebuilts" name="device/google/cuttlefish_prebuilts" remote="aosp" clone-depth="1" />
+  <project path="device/google/cuttlefish_vmm" name="device/google/cuttlefish_vmm" remote="aosp" clone-depth="1" />
+
+  <!-- Goldfish namespace import: keep both sides together. -->
+  <project path="device/generic/goldfish" name="device/generic/goldfish" remote="aosp" />
+  <project path="device/generic/goldfish-opengl" name="device/generic/goldfish-opengl" remote="aosp" />
+  <project path="device/generic/trusty" name="device/generic/trusty" remote="aosp" />
+
+  <!-- Google hardware support: graphics/common imports gchips. -->
+  <project path="hardware/google/camera" name="platform/hardware/google/camera" remote="aosp" />
+  <project path="hardware/google/gchips" name="platform/hardware/google/gchips" remote="aosp" />
+  <project path="hardware/google/graphics/common" name="platform/hardware/google/graphics/common" remote="aosp" />
+
   <project name="HaiKito18/ViaBrowser" path="packages/apps/ViaBrowser" remote="gh" revision="main" />
 
   <project path="device/xiaomi/blossom-kernel" name="crdroidandroid/android_kernel_xiaomi_blossom" remote="gh" revision="16.0">
