@@ -28,9 +28,13 @@ if [[ -d "$ODIR" ]] && [[ -n "$(find "$ODIR" -type f ! -name .gitkeep -print -qu
 fi
 
 HOOK="$PDIR/fixups.sh"
-if [[ -x "$HOOK" ]]; then
+# Check for a regular file, not executable permission: GitHub contents API
+# created scripts may have mode 100644. Explicitly run through bash.
+if [[ -f "$HOOK" ]]; then
   echo "[fixups] running $HOOK"
   SRC="$SRC" bash "$HOOK"
+else
+  echo "[fixups] no hook found at $HOOK"
 fi
 
 # Device vendorsetup.sh on blossom runs patch_camera.sh and applyPatches.sh.
