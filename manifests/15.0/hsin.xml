@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+
+  <remote name="Fiyuu" fetch="https://github.com/kitsunee02" />
+  <remote name="gh" fetch="https://github.com" />
+
+  <project name="device_xiaomi_blossom" path="device/xiaomi/blossom" remote="Fiyuu" revision="lineage-22.2" />
+
+  <project name="Jayedkhan800/android_device_mediatek_sepolicy_vndr" path="device/mediatek/sepolicy_vndr" remote="gh" revision="lineage-22" />
+
+  <project name="HaiKito18/vendor_xiaomi_miuicamera" path="vendor/xiaomi/miuicamera" remote="gh" revision="main" />
+
+  <project name="proprietary_vendor_xiaomi_blossom" path="vendor/xiaomi/blossom" remote="Fiyuu" revision="lineage-22.2" />
+
+  <project path="hardware/mediatek" name="AsTechpro20/android_hardware_mediatek" remote="gh" revision="lineage-22.2" />
+
+  <project name="HaiKito18/ViaBrowser" path="packages/apps/ViaBrowser" remote="gh" revision="main" />
+
+  <project path="device/xiaomi/blossom-kernel" name="crdroidandroid/android_kernel_xiaomi_blossom" remote="gh" revision="16.0">
+    <linkfile src="headers" dest="kernel/xiaomi/blossom" />
+  </project>
+
+</manifest>

@@ -1,74 +1,71 @@
-# crdroid-ice
+# HsinOS Android 15 — Redmi 9A (blossom) CI
 
-Сборка **crDroid** для **Redmi A1 / Redmi A1+ / POCO C50** (кодовое имя `ice`, MediaTek Helio A22 / MT6761) на **бесплатных GitHub Actions**. Это полноценный device-specific ROM, не GSI.
+A device-specific, staged GitHub Actions build setup adapted from `kilib1k/crdroid-ice` for the HsinOS Android 15 manifest and the supplied blossom local manifest.
 
-> Неофициальная экспериментальная сборка. Перед прошивкой обязательно сделайте бэкап разделов `nvram`, `nvdata`, `nvcfg`, `persist`, `protect1/2`. Без них после неудачной прошивки можно потерять IMEI.
+## Source configuration
 
-## Что используется
+| Part | Source / revision |
+|---|---|
+| ROM manifest | `https://github.com/hsin-os/manifest.git` |
+| ROM branch | `Moon_fox` |
+| Android base | `android-15.0.0_r32` (AOSP build ID `BP1A.250505.005`) |
+| Device tree | `kitsunee02/device_xiaomi_blossom`, `lineage-22.2` |
+| Vendor blobs | `kitsunee02/proprietary_vendor_xiaomi_blossom`, `lineage-22.2` |
+| MTK sepolicy | `Jayedkhan800/android_device_mediatek_sepolicy_vndr`, `lineage-22` |
+| MTK HAL | `AsTechpro20/android_hardware_mediatek`, `lineage-22.2` |
+| MIUI camera | `HaiKito18/vendor_xiaomi_miuicamera`, `main` |
+| Via Browser | `HaiKito18/ViaBrowser`, `main` |
+| Kernel/prebuilt bundle | `crdroidandroid/android_kernel_xiaomi_blossom`, `16.0` |
 
-| Компонент | Репозиторий | Ветка |
-|---|---|---|
-| ROM | [crdroidandroid/android](https://github.com/crdroidandroid/android) | `15.0` (Android 15) / `14.0` (Android 14) |
-| Device tree | [Jagatg/android_device_xiaomi_ice](https://github.com/Jagatg/android_device_xiaomi_ice) | `lineage-22.2` |
-| Vendor blobs | [Jagatg/proprietary_android_device_xiaomi_ice](https://github.com/Jagatg/proprietary_android_device_xiaomi_ice) | `lineage-22.2` |
-| Kernel (исходники, ядро в tree — prebuilt) | [Jagatg/android_kernel_xiaomi_ice](https://github.com/Jagatg/android_kernel_xiaomi_ice) | `lineage-23.0` |
-| MTK HAL | [Jagatg/android_hardware_mediatek](https://github.com/Jagatg/android_hardware_mediatek) | `17.0` |
-| MTK sepolicy | [LineageOS/android_device_mediatek_sepolicy_vndr](https://github.com/LineageOS/android_device_mediatek_sepolicy_vndr) | `lineage-22.2` / `lineage-21` |
+The local manifest is stored as `manifests/15.0/hsin.xml`, not `blossom.xml`, because Hsin's `vendor/hsin/build/tools/roomservice.py` looks specifically for `.repo/local_manifests/hsin.xml` when resolving a device and its `hsin.dependencies`.
 
-Device tree написан под LineageOS 22.2 (Android 15), поэтому **рекомендуемая ветка — `15.0` (crDroid 11)**. Ветка `14.0` (crDroid 10, Android 14) экспериментальная: в tree есть зависимости от Android 15 (`prebuilts/vndk/v34`, патчи composer v34), которые для A14 приходится обходить в `patches/14.0`.
+The Hsin manifest's `default.xml` already includes `snippets/remove.xml`, `snippets/miku.xml`, `snippets/lineage.xml`, and `snippets/hsin.xml`. The CI therefore adds only the blossom manifest plus a small CI-only `remove.xml`; it does not duplicate the ROM's snippet files.
 
-## Как запустить сборку
+## Hsin product adapter
 
-1. **Actions → Build crDroid (ice) → Run workflow**.
-2. Выберите ветку (`15.0` или `14.0`) и вариант (`userdebug` по умолчанию).
-3. Ждите. Сборка идёт по этапам. Готовый ROM появится во вкладке **Releases**, а также в artifact `crdroid-ice-<ветка>` у запуска.
+The public `lineage-22.2` blossom tree currently exposes `lineage_blossom.mk`, not `hsin_blossom.mk`, and its Lineage product inherits `vendor/lineage/config/common_full_phone.mk`. That vendor/lineage common product is not part of the supplied Hsin manifest.
 
-**Статус:** Check config проходит для обеих веток — `15.0` и `14.0` (sync ~16 мин, `m nothing` ~12 мин). Полная сборка до получения zip пока не подтверждена.
+To bridge that specific gap, `overrides/15.0/device/xiaomi/blossom/` supplies:
 
-Проверить конфигурацию без полной сборки (около 1 часа) можно через **Actions → Check config (ice)**: там выполняются `repo sync`, `lunch` и `m nothing`, то есть полный разбор Android.bp/Makefile без компиляции. Эта проверка также запускается автоматически при push в `manifests/`, `patches/`, `overrides/`, `scripts/`.
+- `hsin_blossom.mk`, based on the current `lineage_blossom.mk` device/product settings, but inheriting `vendor/hsin/build/product/hsin_product.mk` instead of `vendor/lineage/config/common_full_phone.mk`.
+- `AndroidProducts.mk`, registering the Hsin product and `bp1a` Android 15 lunch combinations.
 
-## Как это укладывается в бесплатные Actions
+These are CI-side overrides; they do not modify your GitHub device-tree repository. Review them alongside your device tree if you change its product configuration.
 
-У бесплатного runner'а для публичного репозитория 4 vCPU, 16 ГБ RAM, один диск около 145 ГБ (после очистки ~130 ГБ свободно) и лимит 6 часов на job. Полный checkout crDroid весит ~97 ГБ, а сборка требует ещё десятки ГБ и длится дольше 6 часов на 4 ядрах, поэтому:
+## Build
 
-- **Место.** `free-space.sh` удаляет предустановленные SDK (.NET, Android SDK, Haskell, CodeQL, Docker-образы, JVM и т. д.). `disk-setup.sh` создаёт образ на всё свободное место, форматирует его в **btrfs** и монтирует в `/home/runner/rom` с `compress-force=zstd:1`. Исходники качаются с `--depth=1`, ненужные проекты (cts, эмуляторы, kernel prebuilts, cuttlefish, darwin/mingw тулчейны, чужие qcom-caf и т. п.) вырезаются через `manifests/<ветка>/remove.xml`, а после sync удаляются git-объекты (`.repo/projects`, `.repo/project-objects`) и неиспользуемые версии clang. В итоге исходники занимают ~31 ГБ на диске, свободно ~80 ГБ под `out/`.
-- **Память.** swapfile 24 ГБ + (если доступен) zram 8 ГБ zstd, процессам runner'а выставлен `oom_score_adj=-1000`, чтобы OOM killer не убил сам job во время `soong_build`.
-- **Время.** Сборка разбита на цепочку из 8 этапов (`build.yml` → `stage.yml`). Каждый этап:
-  1. скачивает `out/` предыдущего этапа (artifact, zstd, части по 1.9 ГБ);
-  2. синхронизирует исходники по **pinned-манифесту**, зафиксированному на первом этапе, чтобы ревизии во всех этапах совпадали;
-  3. ставит всем исходникам старый mtime (2000-01-01), чтобы ninja не пересобирал уже собранное;
-  4. собирает `m bacon` примерно до 5 часов от старта job и затем мягко останавливает ninja (SIGINT);
-  5. если не успел, удаляет исходники, пакует `out/` и передаёт его следующему этапу.
-  
-  Как только `m bacon` завершится успешно, этап публикует Release, а остальные этапы пропускаются. Ожидаемо нужно 3–5 этапов, то есть примерно 15–25 часов реального времени.
+1. Push this directory's contents to a new GitHub repository.
+2. Open **Actions → Build HsinOS Android 15 (blossom) → Run workflow**.
+3. Defaults:
+   - Hsin manifest branch: `Moon_fox`
+   - Lunch: `hsin_blossom-bp1a-userdebug`
+   - Build target: `hsin`
+4. The workflow syncs sources, resolves Hsin roomservice dependencies, pins every project revision, applies the product overlay and device `vendorsetup.sh` hooks, then builds in up to eight stages.
 
-## Структура
+The `bp1a` release selection corresponds to the supplied AOSP tag's build ID `BP1A.250505.005`. Change the workflow lunch input if your device/product branch uses another release configuration.
 
-```
-.github/workflows/
-  build.yml        — полная сборка (цепочка этапов)
-  stage.yml        — один этап (reusable workflow)
-  check.yml        — быстрая проверка конфигурации
-manifests/<ветка>/ice.xml   — local_manifests (device/vendor/kernel/MTK)
-patches/<ветка>/<путь проекта>/*.patch  — патчи поверх исходников (git apply)
-patches/<ветка>/fixups.sh   — скриптовые правки (если нужны)
-overrides/<ветка>/...       — файлы, копируемые поверх дерева исходников
-scripts/                    — free-space, setup-runner, sync, apply-patches, build-stage, pack/unpack, collect
-```
+## Workflows
 
-## Прошивка (кратко)
+- `build.yml`: full staged ROM build, output artifact and GitHub Release.
+- `stage.yml`: reusable stage; restores `out/`, syncs the pinned revisions, builds until its time budget expires, and hands `out/` to the next stage.
+- `check.yml`: sync, apply patches, lunch and run `m nothing` without compiling the full ROM.
+- `diag.yml`: report source and `.repo` disk usage.
 
-1. Разблокированный загрузчик и стоковая прошивка MIUI/HyperOS на базе Android 12 (V13.x) — от неё берётся firmware.
-2. Бэкап разделов (см. предупреждение выше).
-3. Прошивка: `boot.img` из релиза (recovery встроен в boot, `BOARD_USES_RECOVERY_AS_BOOT`) → загрузка в recovery → `adb sideload crDroidAndroid-*.zip` → Format data.
-4. `vbmeta.img` при необходимости: `fastboot --disable-verity --disable-verification flash vbmeta vbmeta.img`.
+## Why the stages work
 
-## Если сборка упала
+Each GitHub-hosted runner is temporary. A later stage re-syncs the exact commits recorded in `pinned.xml`, restores the previous `out/`, sets source mtimes to a fixed old timestamp, then continues the same make target. The `out/` archive is compressed with zstd and split into 1.9 GB chunks before artifact upload.
 
-- У упавшего этапа есть artifact `error-log-stage-N` с `out/error.log`.
-- Исправление кладите в `patches/<ветка>/...` или `overrides/<ветка>/...`, сначала гоняйте **Check config**, потом полную сборку.
-- Device tree активно развивается, поэтому ошибки могут появиться после очередного коммита в upstream. В таком случае зафиксируйте ревизию через атрибут `revision="<sha>"` в `manifests/<ветка>/ice.xml`.
+`KEEP_GIT` defaults to false to save disk, matching the original project's strategy. Enable it in the workflow input if Hsin or device build steps need git object access; that uses considerably more disk.
 
-## Благодарности
+## Device hooks and packages
 
-[Jagatg](https://github.com/Jagatg) за device/vendor/kernel tree для ice, команде crDroid и LineageOS.
+The supplied blossom `vendorsetup.sh` invokes `patch_camera.sh` and `applyPatches.sh`. The CI installs `patchelf` and sources `build/envsetup.sh` before pruning `.repo` objects so those device patches can run. The camera patch is idempotent, and `applyPatches.sh` uses its `TMP_PATCHES` marker.
+
+The collector looks for the final `*.zip` produced by Hsin's `m hsin` target (whose make rule renames the OTA package to `$(PROD_VERSION).zip`) and also collects selected images and checksums.
+
+## Important limitations
+
+- This is a CI configuration assembled from the supplied archives and the current public files on the referenced branches. It has **not** been executed against a full Android source checkout, and a successful ROM build is not guaranteed until the `check.yml` workflow passes.
+- The product adapter is a best-effort conversion from the public Lineage blossom product to Hsin's product layout. If your local device tree has further Hsin-specific changes, update the override to match them.
+- The workflow uses GitHub-hosted Ubuntu 24.04 runners and staged artifacts. Large source/output artifacts can hit runner disk, job-duration, or artifact-storage limits. A self-hosted runner with ample SSD space and RAM may be more reliable.
+- Do not treat a successful `m nothing` check as proof that the ROM will boot. Test the generated ZIP carefully and keep backups of device-specific partitions.
