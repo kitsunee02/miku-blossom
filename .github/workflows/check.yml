@@ -1,5 +1,9 @@
 name: Check HsinOS configuration (blossom)
 
+concurrency:
+  group: hsin-blossom-config-check-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
     inputs:
