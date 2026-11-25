@@ -10,6 +10,5 @@
   <remove-project path="prebuilts/abi-dumps/ndk" />
   <remove-project path="prebuilts/abi-dumps/platform" />
   <remove-project path="prebuilts/abi-dumps/vndk" />
-  <remove-project path="prebuilts/gcc/linux-x86/host/x86_64-w64-mingw32-4.8" />
   <remove-project path="prebuilts/remoteexecution-client" />
 </manifest>
