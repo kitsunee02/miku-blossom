@@ -4,6 +4,8 @@
 # Writes: $ROM_ROOT/status = done | timeout | failed
 set -uo pipefail
 source "$(dirname "$0")/env.sh"
+# ulimit is process-local, so set it in this shell before starting Soong.
+ulimit -n 65535 || true
 DEADLINE="$1"
 RESUMED="${2:-0}"
 TARGET="${3:-$BUILD_TARGET}"
