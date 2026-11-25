@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Hsin roomservice expects the device's local manifest to be named hsin.xml.
-# This runs dependency-only mode so hsin.dependencies (when present) is synced
-# before the pinned manifest is generated for all subsequent build stages.
+# Resolve Hsin hsin.dependencies before the first pinned manifest is generated.
+# Hsin roomservice expects the local device manifest to be named hsin.xml.
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 cd "$SRC"
 
 ROOMSERVICE="vendor/hsin/build/tools/roomservice.py"
-if [[ -f "$ROOMSERVICE" ]]; then
-  DEVICE_PRODUCT="${HSIN_PRODUCT}"
-  echo "[roomservice] resolving dependencies for ${DEVICE_PRODUCT}"
-  python3 "$ROOMSERVICE" "$DEVICE_PRODUCT" true
-else
-  echo "[roomservice] not found in Hsin source; skipping dependency expansion"
+if [[ ! -f "$ROOMSERVICE" ]]; then
+  echo "::error::Hsin roomservice not found at $ROOMSERVICE after repo sync"
+  exit 1
 fi
+
+echo "[roomservice] resolving dependencies for $HSIN_PRODUCT (branch: $HSIN_BRANCH)"
+ROOMSERVICE_DEFAULT_BRANCH="$HSIN_BRANCH" \
+  python3 "$ROOMSERVICE" "$HSIN_PRODUCT" true
