@@ -10,6 +10,13 @@ on:
       keep_git: { type: boolean, required: false, default: false }
       debug_terminal: { type: boolean, required: false, default: false }
       build_minutes: { type: number, required: false, default: 300 }
+    secrets:
+      TS_OAUTH_CLIENT_ID:
+        required: false
+      TS_OAUTH_SECRET:
+        required: false
+      CI_SSH_PUBLIC_KEY:
+        required: false
     outputs:
       done:
         description: "true when the HsinOS ZIP was built"
