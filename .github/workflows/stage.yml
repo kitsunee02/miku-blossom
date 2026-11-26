@@ -151,6 +151,7 @@ jobs:
           path: |
             /home/runner/rom/src/out/error.log
             /home/runner/rom/src/out/soong.log
+            /home/runner/rom/diagnostics/mem.log
           if-no-files-found: ignore
           retention-days: 14
 

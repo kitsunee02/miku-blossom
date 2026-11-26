@@ -1,8 +1,10 @@
 name: Check HsinOS configuration (blossom)
 
+# Only a newer push cancels an older push-triggered check. Manual runs are never
+# cancelled by pushes and never cancel each other.
 concurrency:
-  group: hsin-blossom-config-check-${{ github.ref }}
-  cancel-in-progress: true
+  group: hsin-blossom-config-check-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 on:
   workflow_dispatch:
@@ -95,10 +97,11 @@ jobs:
           sudo btrfs filesystem usage -T /home/runner/rom || true
           du -sh --apparent-size /home/runner/rom/src 2>/dev/null || true
       - uses: actions/upload-artifact@v7
-        if: failure()
+        if: always()
         with:
           name: hsin-config-error
           path: |
             /home/runner/rom/src/out/error.log
             /home/runner/rom/src/out/soong.log
+            /home/runner/rom/diagnostics/mem.log
           if-no-files-found: ignore

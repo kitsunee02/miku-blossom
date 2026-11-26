@@ -35,10 +35,18 @@ if (( SECS < 600 )); then
 fi
 
 JOBS="$(nproc)"
+
+# Keep Go (soong_build and friends) from growing past what the runner can hold,
+# and keep the VM responsive by killing the biggest process if memory runs out.
+export GOMEMLIMIT="${GOMEMLIMIT:-9GiB}"
+export GOGC="${GOGC:-75}"
+"$REPO_DIR/scripts/mem-guard.sh" start || true
+
 set +e
 timeout -s INT -k 600 "$SECS" build/soong/soong_ui.bash --make-mode "$TARGET" -j"$JOBS"
 rc=$?
 set -e
+"$REPO_DIR/scripts/mem-guard.sh" stop || true
 case "$rc" in
   0)   echo done > "$ROM_ROOT/status" ;;
   124) echo timeout > "$ROM_ROOT/status" ;;
