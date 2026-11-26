@@ -14,6 +14,12 @@
 
   <project path="hardware/mediatek" name="AsTechpro20/android_hardware_mediatek" remote="gh" revision="lineage-22.2" />
 
+  <!-- Hsin's Launcher3 fork is built on Lineage's Trebuchet and needs
+       org.lineageos.platform (lineage-sdk), which this tree does not carry.
+       Use stock AOSP Launcher3 (Launcher3QuickStep) for the blossom build. -->
+  <remove-project name="platform_packages_apps_Launcher3" />
+  <project path="packages/apps/Launcher3" name="platform/packages/apps/Launcher3" remote="aosp" />
+
   <project name="HaiKito18/ViaBrowser" path="packages/apps/ViaBrowser" remote="gh" revision="main" />
 
   <project path="device/xiaomi/blossom-kernel" name="crdroidandroid/android_kernel_xiaomi_blossom" remote="gh" revision="16.0">
