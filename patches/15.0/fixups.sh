@@ -39,7 +39,6 @@ require_module() {
 remove_path "hardware/lineage/interfaces/sensors"
 remove_path "hardware/lineage/interfaces/biometrics/fingerprint"
 remove_path "hardware/interfaces/biometrics/fingerprint/2.1/default"
-remove_path "platform_testing/tools/automotive"
 
 # The Lineage power-libperfmgr namespace imports hardware/google/pixel.
 # blossom builds the Pixel power HAL instead, so avoid parsing this unused
