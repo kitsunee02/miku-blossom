@@ -100,5 +100,5 @@ jobs:
           name: hsin-config-error
           path: |
             /home/runner/rom/src/out/error.log
-            /home/runner/rom/src/out/soong.log
+            /home/runner/rom/src/out/soong.log\n            /home/runner/rom/diagnostics/runner-diagnostics.txt
           if-no-files-found: ignore
