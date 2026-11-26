@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Additional CI-only removals on top of HsinOS snippets/remove.xml.
-     Keep the 4.19 kernel prebuilts and kernel-build-tools used by the blossom tree. -->
+<!-- No additional CI-only removals: every AOSP project not removed by the
+     HsinOS snippets/remove.xml (the projects Miku replaces) stays synced,
+     because Soong parses all Android.bp files and fails on undefined modules. -->
 <manifest>
-  <remove-project path="developers/build" />
-  <remove-project path="kernel/prebuilts/6.1/arm64" />
-  <remove-project path="kernel/prebuilts/6.6/arm64" />
-  <remove-project path="kernel/prebuilts/mainline/arm64" />
-  <remove-project path="kernel/tests" />
-  <remove-project path="prebuilts/abi-dumps/ndk" />
-  <remove-project path="prebuilts/abi-dumps/platform" />
-  <remove-project path="prebuilts/abi-dumps/vndk" />
-  <remove-project path="prebuilts/remoteexecution-client" />
 </manifest>
