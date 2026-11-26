@@ -90,6 +90,16 @@ jobs:
             tail -n 160 "$ROM_ROOT/src/out/error.log" 2>/dev/null || true
             exit 1
           fi
+      - name: List all duplicate modules (Kati stops at the first one)
+        if: failure()
+        run: |
+          mkdir -p /home/runner/rom/diagnostics
+          MK=$(ls /home/runner/rom/src/out/soong/Android-*.mk 2>/dev/null | head -n1)
+          if [[ -n "$MK" ]]; then
+            python3 hsin-blossom-ci/scripts/find-dupes.py "$MK" | tee /home/runner/rom/diagnostics/duplicate-modules.txt | head -n 300
+          else
+            echo "no generated Android-*.mk (Soong did not finish)"
+          fi
       - name: Disk report
         if: always()
         run: |
@@ -105,4 +115,5 @@ jobs:
             /home/runner/rom/src/out/soong.log
             /home/runner/rom/diagnostics/mem.log
             /home/runner/rom/diagnostics/trim-report.txt
+            /home/runner/rom/diagnostics/duplicate-modules.txt
           if-no-files-found: ignore
