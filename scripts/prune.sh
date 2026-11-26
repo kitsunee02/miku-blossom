@@ -28,3 +28,12 @@ fi
 
 df -h "$ROM_ROOT"
 sudo btrfs filesystem usage -T "$ROM_ROOT" 2>/dev/null | head -8 || true
+
+# Drop source directories blossom does not need, but only the ones that nothing
+# else in the tree references (see scripts/trim.py). Set TRIM=0 to skip.
+if [[ "${TRIM:-1}" == 1 ]]; then
+  mkdir -p "$ROM_ROOT/diagnostics"
+  python3 "$REPO_DIR/scripts/trim.py" "$SRC" "$REPO_DIR/manifests/$ROM_VERSION/trim.list" \
+    --apply --report "$ROM_ROOT/diagnostics/trim-report.txt"
+  df -h "$ROM_ROOT"
+fi

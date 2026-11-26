@@ -104,4 +104,5 @@ jobs:
             /home/runner/rom/src/out/error.log
             /home/runner/rom/src/out/soong.log
             /home/runner/rom/diagnostics/mem.log
+            /home/runner/rom/diagnostics/trim-report.txt
           if-no-files-found: ignore

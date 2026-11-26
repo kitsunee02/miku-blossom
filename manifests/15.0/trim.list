@@ -1,0 +1,119 @@
+# Paths (repo roots or sub-directories) that blossom does not need and that are
+# only deleted by scripts/trim.py when NOTHING outside the removed set refers to
+# them (module names in Android.bp / Android.mk, or their path in a .bp/.mk).
+# Anything that is still referenced is kept automatically, so a wrong guess here
+# costs build time, never a broken build.
+# One path per line, relative to the source root. '#' starts a comment.
+
+# --- Automotive / TV ---
+packages/apps/Car
+packages/services/Car
+frameworks/opt/car
+frameworks/opt/tv
+packages/apps/TV
+device/generic/car
+device/google_car
+device/google/atv
+device/google/trout
+hardware/interfaces/automotive
+hardware/interfaces/tv
+
+# --- Cuttlefish / emulator / Trusty ---
+device/google/cuttlefish
+device/google/cuttlefish_prebuilts
+device/google/cuttlefish_vmm
+device/generic/goldfish
+device/generic/goldfish-opengl
+device/generic/mini-emulator-arm64
+device/generic/mini-emulator-armv7-a-neon
+device/generic/mini-emulator-x86
+device/generic/mini-emulator-x86_64
+device/generic/trusty
+device/generic/x86
+device/generic/x86_64
+external/trusty
+prebuilts/android-emulator
+prebuilts/qemu-kernel
+
+# --- Other Google devices (Pixel) ---
+device/google/akita
+device/google/akita-kernels
+device/google/akita-sepolicy
+device/google/bluejay
+device/google/bluejay-kernels
+device/google/bluejay-sepolicy
+device/google/caimito
+device/google/caimito-kernels
+device/google/caimito-sepolicy
+device/google/comet
+device/google/comet-kernels
+device/google/comet-sepolicy
+device/google/felix
+device/google/felix-kernels
+device/google/felix-sepolicy
+device/google/gs-common
+device/google/gs101
+device/google/gs101-sepolicy
+device/google/gs201
+device/google/gs201-sepolicy
+device/google/lynx
+device/google/lynx-kernels
+device/google/lynx-sepolicy
+device/google/pantah
+device/google/pantah-kernels
+device/google/pantah-sepolicy
+device/google/raviole
+device/google/raviole-kernels
+device/google/shusky
+device/google/shusky-kernels
+device/google/shusky-sepolicy
+device/google/tangorpro
+device/google/tangorpro-kernels
+device/google/tangorpro-sepolicy
+device/google/zuma
+device/google/zuma-sepolicy
+device/google/zumapro
+device/google/zumapro-sepolicy
+device/google/contexthub
+hardware/google/graphics/gs101
+hardware/google/graphics/gs201
+hardware/google/graphics/zuma
+hardware/google/graphics/zumapro
+
+# --- Other vendors' HALs ---
+hardware/broadcom
+hardware/nxp
+hardware/samsung
+hardware/st
+hardware/ti
+hardware/qcom/wlan
+
+# --- Kernel prebuilts for other targets / virtual devices ---
+kernel/prebuilts/6.1/x86_64
+kernel/prebuilts/6.6/x86_64
+kernel/prebuilts/mainline/x86_64
+kernel/prebuilts/common-modules/virtual-device
+kernel/tests
+
+# --- Host tools for other OSes, IDE/SDK extras, test suites ---
+prebuilts/clang/host/darwin-x86
+prebuilts/go/darwin-x86
+prebuilts/cmdline-tools
+prebuilts/gradle-plugin
+prebuilts/abi-dumps/ndk
+prebuilts/abi-dumps/platform
+developers
+sdk
+pdk
+test/app_compat
+test/catbox
+test/cts-root
+test/dittosuite
+test/mlts
+test/mts
+test/suite_harness
+test/vts
+test/vts-testcase
+tools/asuite
+tools/tradefederation
+external/ltp
