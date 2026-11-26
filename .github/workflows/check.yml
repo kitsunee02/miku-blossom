@@ -82,7 +82,7 @@ jobs:
       - run: hsin-blossom-ci/scripts/prune.sh
       - name: Lunch and run m nothing
         run: |
-          DEADLINE=$(( $(date +%s) + 150 * 60 ))
+          DEADLINE=$(( $(date +%s) + 60 * 60 ))
           hsin-blossom-ci/scripts/build-stage.sh "$DEADLINE" 0 nothing
           S=$(cat "$ROM_ROOT/status" 2>/dev/null || echo failed)
           echo "### HsinOS config check: $S" >> "$GITHUB_STEP_SUMMARY"

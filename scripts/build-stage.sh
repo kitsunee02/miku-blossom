@@ -42,6 +42,26 @@ export GOMEMLIMIT="${GOMEMLIMIT:-9GiB}"
 export GOGC="${GOGC:-75}"
 "$REPO_DIR/scripts/mem-guard.sh" start || true
 
+# Put the build in its own cgroup with a soft memory ceiling (memory.high). When
+# soong_build wants more than the ceiling the kernel throttles and swaps out only
+# that cgroup, instead of reclaiming pages from the runner agent and sshd. That
+# is what turns "VM starved -> hosted runner lost communication" into a slow but
+# alive build. Best effort: silently skipped if cgroup v2 is not writable.
+if [[ -z "${BUILD_MEM_HIGH:-}" ]]; then
+  _total_mb=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+  BUILD_MEM_HIGH="$(( _total_mb - 3500 ))M"
+fi
+CG=/sys/fs/cgroup/hsinbuild
+if [[ -f /sys/fs/cgroup/cgroup.controllers ]] && grep -qw memory /sys/fs/cgroup/cgroup.controllers; then
+  sudo sh -c "echo +memory > /sys/fs/cgroup/cgroup.subtree_control" 2>/dev/null || true
+  if sudo mkdir -p "$CG" 2>/dev/null \
+     && sudo sh -c "echo $BUILD_MEM_HIGH > $CG/memory.high && echo $$ > $CG/cgroup.procs" 2>/dev/null; then
+    echo "[stage] build cgroup $CG memory.high=$BUILD_MEM_HIGH"
+  else
+    echo "[stage] build cgroup not available; continuing without memory.high"
+  fi
+fi
+
 set +e
 timeout -s INT -k 600 "$SECS" build/soong/soong_ui.bash --make-mode "$TARGET" -j"$JOBS"
 rc=$?
