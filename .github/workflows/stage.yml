@@ -11,7 +11,7 @@ on:
       debug_terminal: { type: boolean, required: false, default: false }
       build_minutes: { type: number, required: false, default: 300 }
       resume_run_id: { type: string, required: false, default: "" }
-      resume_from_stage: { type: number, required: false, default: 1 }
+      resume_from_stage: { type: string, required: false, default: "1" }
     secrets:
       TS_OAUTH_CLIENT_ID:
         required: false

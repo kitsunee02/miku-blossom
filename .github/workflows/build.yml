@@ -32,8 +32,8 @@ on:
         default: ""
       resume_from_stage:
         description: "Resume: N of that run's out-stage-N artifact (last successful stage)"
-        type: number
-        default: 1
+        type: string
+        default: "1"
 
 permissions:
   actions: read
