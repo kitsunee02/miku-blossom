@@ -47,6 +47,15 @@ timeout -s INT -k 600 "$SECS" build/soong/soong_ui.bash --make-mode "$TARGET" -j
 rc=$?
 set -e
 "$REPO_DIR/scripts/mem-guard.sh" stop || true
+# Show the memory trace in the job log (the artifact is not readable if the job dies).
+if [[ -f "$ROM_ROOT/diagnostics/mem.log" ]]; then
+  echo "[mem] peak/guard summary:"
+  grep -E '^!!!|^===' "$ROM_ROOT/diagnostics/mem.log" | tail -n 20 || true
+  echo "[mem] last samples:"
+  tail -n 25 "$ROM_ROOT/diagnostics/mem.log" || true
+  echo "[mem] lowest MemAvailable (MB):"
+  grep -oE 'avail=[0-9]+' "$ROM_ROOT/diagnostics/mem.log" | cut -d= -f2 | sort -n | head -1 || true
+fi
 case "$rc" in
   0)   echo done > "$ROM_ROOT/status" ;;
   124) echo timeout > "$ROM_ROOT/status" ;;

@@ -15,8 +15,8 @@ DIAG="$ROM_ROOT/diagnostics"
 LOG="$DIAG/mem.log"
 PIDF="$DIAG/mem-guard.pid"
 INTERVAL="${MEM_GUARD_INTERVAL:-5}"
-PSI_LIMIT="${MEM_GUARD_PSI_FULL:-40}"      # memory "full" avg10 percentage
-PSI_STRIKES="${MEM_GUARD_STRIKES:-3}"      # consecutive samples over the limit
+PSI_LIMIT="${MEM_GUARD_PSI_FULL:-60}"      # memory "full" avg10 percentage
+PSI_STRIKES="${MEM_GUARD_STRIKES:-6}"      # consecutive samples over the limit
 MIN_AVAIL_MB="${MEM_GUARD_MIN_AVAIL_MB:-350}"
 
 run() {
