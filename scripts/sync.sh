@@ -10,22 +10,24 @@ cd "$SRC"
 repo init -q --depth=1 --no-clone-bundle --git-lfs \
   -u "$HSIN_MANIFEST_URL" -b "$HSIN_BRANCH"
 
-JOBS=$(( $(nproc) * 4 ))
-SYNC_ARGS=(-c -j"$JOBS" --force-sync --no-clone-bundle --no-tags --optimized-fetch --prune --fail-fast)
+# Google source rate-limits (HTTP 429) aggressive parallel fetches; keep this modest.
+JOBS="${SYNC_JOBS:-$(( $(nproc) * 2 ))}"
+(( JOBS > 8 )) && JOBS=8
+SYNC_ARGS=(-c -j"$JOBS" --force-sync --no-clone-bundle --no-tags --optimized-fetch --prune --retry-fetches=3)
 
 sync_with_retry() {
   local attempt
   local -a command=( "$@" )
 
-  for attempt in 1 2 3; do
+  for attempt in 1 2 3 4; do
     if "${command[@]}"; then
       return 0
     fi
     echo "::warning::repo sync attempt ${attempt} failed"
-    if [[ "$attempt" == 3 ]]; then
+    if [[ "$attempt" == 4 ]]; then
       return 1
     fi
-    sleep 20
+    sleep $(( attempt * 60 ))
   done
 }
 
