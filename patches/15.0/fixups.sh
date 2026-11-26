@@ -36,6 +36,10 @@ require_module() {
 }
 
 # Targeted removals for conflicts/unneeded device-specific interfaces.
+# hardware/google/pixel/kernel_headers defines qti_kernel_headers, which vendor/hsin
+# (build/soong/Android.bp) already provides; Kati aborts on the duplicate
+# MODULE.TARGET.HEADER_LIBRARIES.qti_kernel_headers.recovery.
+remove_path "hardware/google/pixel/kernel_headers"
 remove_path "hardware/lineage/interfaces/sensors"
 remove_path "hardware/lineage/interfaces/biometrics/fingerprint"
 remove_path "hardware/interfaces/biometrics/fingerprint/2.1/default"
