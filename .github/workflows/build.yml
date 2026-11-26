@@ -26,8 +26,17 @@ on:
         description: "Enable private SSH terminal on each stage (requires Tailscale secrets)"
         type: boolean
         default: false
+      resume_run_id:
+        description: "Resume: run ID of an earlier Build run whose out-stage-N artifact to continue from (blank = fresh build)"
+        type: string
+        default: ""
+      resume_from_stage:
+        description: "Resume: N of that run's out-stage-N artifact (last successful stage)"
+        type: number
+        default: 1
 
 permissions:
+  actions: read
   contents: write
   statuses: write
 
@@ -45,6 +54,8 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
+      resume_run_id: ${{ inputs.resume_run_id }}
+      resume_from_stage: ${{ inputs.resume_from_stage }}
     secrets:
       TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
       TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
@@ -60,6 +71,8 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
+      resume_run_id: ${{ inputs.resume_run_id }}
+      resume_from_stage: ${{ inputs.resume_from_stage }}
     secrets:
       TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
       TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
@@ -75,6 +88,8 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
+      resume_run_id: ${{ inputs.resume_run_id }}
+      resume_from_stage: ${{ inputs.resume_from_stage }}
     secrets:
       TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
       TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
@@ -90,6 +105,8 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
+      resume_run_id: ${{ inputs.resume_run_id }}
+      resume_from_stage: ${{ inputs.resume_from_stage }}
     secrets:
       TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
       TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
@@ -105,6 +122,8 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
+      resume_run_id: ${{ inputs.resume_run_id }}
+      resume_from_stage: ${{ inputs.resume_from_stage }}
     secrets:
       TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
       TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
@@ -120,6 +139,8 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
+      resume_run_id: ${{ inputs.resume_run_id }}
+      resume_from_stage: ${{ inputs.resume_from_stage }}
     secrets:
       TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
       TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
@@ -135,6 +156,8 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
+      resume_run_id: ${{ inputs.resume_run_id }}
+      resume_from_stage: ${{ inputs.resume_from_stage }}
     secrets:
       TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
       TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
@@ -150,6 +173,8 @@ jobs:
       build_target: ${{ inputs.build_target }}
       keep_git: ${{ inputs.keep_git }}
       debug_terminal: ${{ inputs.debug_terminal }}
+      resume_run_id: ${{ inputs.resume_run_id }}
+      resume_from_stage: ${{ inputs.resume_from_stage }}
     secrets:
       TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
       TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}

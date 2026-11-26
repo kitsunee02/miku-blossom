@@ -10,6 +10,8 @@ on:
       keep_git: { type: boolean, required: false, default: false }
       debug_terminal: { type: boolean, required: false, default: false }
       build_minutes: { type: number, required: false, default: 300 }
+      resume_run_id: { type: string, required: false, default: "" }
+      resume_from_stage: { type: number, required: false, default: 1 }
     secrets:
       TS_OAUTH_CLIENT_ID:
         required: false
@@ -45,7 +47,14 @@ jobs:
         id: meta
         run: |
           echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
-          echo "prev=$(( ${{ inputs.stage }} - 1 ))" >> "$GITHUB_OUTPUT"
+          if [[ "${{ inputs.stage }}" == 1 && -n "${{ inputs.resume_run_id }}" ]]; then
+            # Resume a failed run: stage 1 of this run continues from that run's out-stage-N.
+            echo "prev=${{ inputs.resume_from_stage }}" >> "$GITHUB_OUTPUT"
+            echo "resume=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "prev=$(( ${{ inputs.stage }} - 1 ))" >> "$GITHUB_OUTPUT"
+            echo "resume=$([[ ${{ inputs.stage }} -gt 1 ]] && echo 1 || echo 0)" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: actions/checkout@v7
         with:
@@ -90,33 +99,37 @@ jobs:
         run: bash hsin-blossom-ci/scripts/start-debug-ssh.sh
 
       - name: Download previous out/
-        if: inputs.stage > 1
+        if: steps.meta.outputs.resume == '1'
         uses: actions/download-artifact@v8
         with:
           name: out-stage-${{ steps.meta.outputs.prev }}
           path: /home/runner/rom/parts
+          run-id: ${{ (inputs.stage == 1 && inputs.resume_run_id) || github.run_id }}
+          github-token: ${{ github.token }}
 
       - name: Download pinned manifest
-        if: inputs.stage > 1
+        if: steps.meta.outputs.resume == '1'
         uses: actions/download-artifact@v8
         with:
           name: pinned-manifest
           path: /home/runner/rom/manifest
+          run-id: ${{ (inputs.stage == 1 && inputs.resume_run_id) || github.run_id }}
+          github-token: ${{ github.token }}
 
       - name: Restore out/
-        if: inputs.stage > 1
+        if: steps.meta.outputs.resume == '1'
         run: hsin-blossom-ci/scripts/unpack-out.sh
 
       - name: Repo sync
         run: |
-          if [[ "$STAGE" -gt 1 ]]; then
+          if [[ "${{ steps.meta.outputs.resume }}" == 1 ]]; then
             hsin-blossom-ci/scripts/sync.sh "$ROM_ROOT/manifest/pinned.xml"
           else
             hsin-blossom-ci/scripts/sync.sh
           fi
 
       - name: Upload pinned manifest
-        if: inputs.stage == 1
+        if: inputs.stage == 1 && steps.meta.outputs.resume != '1'
         uses: actions/upload-artifact@v7
         with:
           name: pinned-manifest
@@ -133,7 +146,7 @@ jobs:
         run: |
           DEADLINE=$(( JOB_START + ${{ inputs.build_minutes }} * 60 ))
           RESUMED=0
-          [[ "$STAGE" -gt 1 ]] && RESUMED=1
+          [[ "${{ steps.meta.outputs.resume }}" == 1 ]] && RESUMED=1
           hsin-blossom-ci/scripts/build-stage.sh "$DEADLINE" "$RESUMED" "$BUILD_TARGET"
 
       - name: Record stage result

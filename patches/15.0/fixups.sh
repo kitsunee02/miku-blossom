@@ -63,4 +63,36 @@ require_file "hardware/google/aemu/Android.bp"
 require_file "hardware/google/gfxstream/Android.bp"
 require_module "hardware/google/gfxstream/host/Android.bp" "libgfxstream_backend"
 
+# Hsin SystemUI's ISystemUiProxy (inherited from Miku) has injectDoublePress(int);
+# stock AOSP Launcher3 (swapped in for the Miku launcher) does not implement it, so
+# Launcher3QuickStepLib fails to compile. Add the forwarding method if it is missing.
+LSUP="packages/apps/Launcher3/quickstep/src/com/android/quickstep/SystemUiProxy.java"
+require_file "$LSUP"
+if ! grep -q "injectDoublePress" "$LSUP"; then
+  python3 - "$LSUP" <<'PY'
+import re, sys
+p = sys.argv[1]
+s = open(p).read()
+m = re.search(r"    @Override\n    public void injectLongPress\(int keyCode\) \{.*?\n    \}\n", s, re.S)
+if not m:
+    sys.exit("::error::injectLongPress not found in " + p)
+add = """
+    @Override
+    public void injectDoublePress(int keyCode) {
+        if (mSystemUiProxy != null) {
+            try {
+                mSystemUiProxy.injectDoublePress(keyCode);
+            } catch (RemoteException e) {
+                Log.w(TAG, "Failed call injectDoublePress", e);
+            }
+        }
+    }
+"""
+open(p, "w").write(s[:m.end()] + add + s[m.end():])
+PY
+  echo "[fixups] added injectDoublePress to Launcher3 SystemUiProxy"
+else
+  echo "[fixups] Launcher3 SystemUiProxy already has injectDoublePress"
+fi
+
 echo "[fixups] completed Android 15 source-tree fixups"
