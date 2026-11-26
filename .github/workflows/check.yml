@@ -88,6 +88,27 @@ jobs:
             tail -n 160 "$ROM_ROOT/src/out/error.log" 2>/dev/null || true
             exit 1
           fi
+      - name: Collect runner diagnostics
+        if: always()
+        run: |
+          mkdir -p /home/runner/rom/diagnostics
+          OUT=/home/runner/rom/diagnostics/runner-diagnostics.txt
+          {
+            echo "=== Timestamp ==="; date -Is
+            echo "=== Host / kernel ==="; uname -a
+            echo "=== Uptime ==="; uptime
+            echo "=== RAM and swap ==="; free -h; swapon --show || true
+            echo "=== VM stats ==="; vmstat 1 5 || true
+            echo "=== Memory pressure ==="; cat /proc/pressure/memory 2>/dev/null || true
+            echo "=== Disk ==="; df -hT
+            echo "=== Top memory processes ==="; ps aux --sort=-%mem | head -n 30
+            echo "=== Cgroup memory ==="; for f in /sys/fs/cgroup/memory.{current,max,peak,events,stat}; do echo "--- $f"; cat "$f" 2>/dev/null || true; done
+            echo "=== Kernel OOM / crash messages (dmesg) ==="; sudo dmesg -T 2>/dev/null | grep -Ei 'oom|out of memory|killed process|memory cgroup|segfault|panic' | tail -n 200 || true
+            echo "=== Kernel OOM / crash messages (journal) ==="; sudo journalctl -k --since '-4 hours' 2>/dev/null | grep -Ei 'oom|out of memory|killed process|memory cgroup|segfault|panic' | tail -n 200 || true
+            echo "=== ROM status ==="; cat /home/runner/rom/status 2>/dev/null || true
+            echo "=== Soong/build logs ==="; ls -lh /home/runner/rom/src/out/{error.log,soong.log} 2>/dev/null || true
+          } > "$OUT" 2>&1
+          echo "Diagnostics saved: $OUT"
       - name: Disk report
         if: always()
         run: |
@@ -100,5 +121,6 @@ jobs:
           name: hsin-config-error
           path: |
             /home/runner/rom/src/out/error.log
-            /home/runner/rom/src/out/soong.log\n            /home/runner/rom/diagnostics/runner-diagnostics.txt
+            /home/runner/rom/src/out/soong.log
+            /home/runner/rom/diagnostics/runner-diagnostics.txt
           if-no-files-found: ignore
