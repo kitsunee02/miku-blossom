@@ -29,6 +29,7 @@ on:
 
 permissions:
   contents: write
+  statuses: write
 
 concurrency:
   group: hsin-blossom-build-${{ github.ref }}

@@ -63,9 +63,15 @@ if [[ -f /sys/fs/cgroup/cgroup.controllers ]] && grep -qw memory /sys/fs/cgroup/
 fi
 
 set +e
-timeout -s INT -k 600 "$SECS" build/soong/soong_ui.bash --make-mode "$TARGET" -j"$JOBS"
-rc=$?
+# Keep a copy of the build output so progress can be published and tailed.
+mkdir -p "$ROM_ROOT/diagnostics"
+BUILD_LOG="$ROM_ROOT/diagnostics/build.log"
+: > "$BUILD_LOG"
+"$REPO_DIR/scripts/progress.sh" start || true
+timeout -s INT -k 600 "$SECS" build/soong/soong_ui.bash --make-mode "$TARGET" -j"$JOBS" 2>&1 | tee -a "$BUILD_LOG"
+rc=${PIPESTATUS[0]}
 set -e
+"$REPO_DIR/scripts/progress.sh" stop || true
 "$REPO_DIR/scripts/mem-guard.sh" stop || true
 # Show the memory trace in the job log (the artifact is not readable if the job dies).
 if [[ -f "$ROM_ROOT/diagnostics/mem.log" ]]; then
@@ -83,6 +89,11 @@ case "$rc" in
 esac
 
 echo "[stage] soong rc=$rc status=$(cat "$ROM_ROOT/status")"
+case "$(cat "$ROM_ROOT/status")" in
+  done)    "$REPO_DIR/scripts/progress.sh" final "stage ${STAGE:-?} finished: ROM built" success || true ;;
+  timeout) "$REPO_DIR/scripts/progress.sh" final "stage ${STAGE:-?} hit its deadline, next stage resumes" success || true ;;
+  *)       "$REPO_DIR/scripts/progress.sh" final "stage ${STAGE:-?} FAILED, see the job log" failure || true ;;
+esac
 df -h "$ROM_ROOT"
 du -sh out 2>/dev/null || true
 exit 0

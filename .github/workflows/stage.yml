@@ -38,6 +38,7 @@ jobs:
       BUILD_TARGET: ${{ inputs.build_target }}
       KEEP_GIT: ${{ inputs.keep_git && '1' || '0' }}
       STAGE: ${{ inputs.stage }}
+      GH_TOKEN: ${{ github.token }}
 
     steps:
       - name: Record job start
