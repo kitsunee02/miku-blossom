@@ -63,36 +63,44 @@ require_file "hardware/google/aemu/Android.bp"
 require_file "hardware/google/gfxstream/Android.bp"
 require_module "hardware/google/gfxstream/host/Android.bp" "libgfxstream_backend"
 
-# Hsin SystemUI's ISystemUiProxy (inherited from Miku) has injectDoublePress(int);
-# stock AOSP Launcher3 (swapped in for the Miku launcher) does not implement it, so
-# Launcher3QuickStepLib fails to compile. Add the forwarding method if it is missing.
+# Hsin SystemUI's ISystemUiProxy (inherited from Miku/Lineage) has extra methods,
+# injectLongPress(int) and injectDoublePress(int). Stock AOSP Launcher3 (swapped in for
+# the Miku launcher) does not implement them, so Launcher3QuickStepLib fails to compile
+# (javac reports only the first missing one). Add forwarding methods when missing.
 LSUP="packages/apps/Launcher3/quickstep/src/com/android/quickstep/SystemUiProxy.java"
 require_file "$LSUP"
-if ! grep -q "injectDoublePress" "$LSUP"; then
-  python3 - "$LSUP" <<'PY'
+python3 - "$LSUP" <<'PY'
 import re, sys
 p = sys.argv[1]
 s = open(p).read()
 m = re.search(r"public class SystemUiProxy implements [^{]*\{\n", s)
 if not m or "mSystemUiProxy" not in s:
     sys.exit("::error::SystemUiProxy class anchor or mSystemUiProxy not found in " + p)
-add = """
+add = ""
+for name in ("injectLongPress", "injectDoublePress"):
+    if name in s:
+        print("[fixups] Launcher3 SystemUiProxy already has " + name)
+        continue
+    add += """
     @Override
-    public void injectDoublePress(int keyCode) {
+    public void %s(int keyCode) {
         if (mSystemUiProxy != null) {
             try {
-                mSystemUiProxy.injectDoublePress(keyCode);
+                mSystemUiProxy.%s(keyCode);
             } catch (RemoteException e) {
-                Log.w(TAG, "Failed call injectDoublePress", e);
+                Log.w(TAG, "Failed call %s", e);
             }
         }
     }
-"""
-open(p, "w").write(s[:m.end()] + add + s[m.end():])
+""" % (name, name, name)
+    print("[fixups] adding " + name + " to Launcher3 SystemUiProxy")
+if add:
+    open(p, "w").write(s[:m.end()] + add + s[m.end():])
 PY
-  echo "[fixups] added injectDoublePress to Launcher3 SystemUiProxy"
-else
-  echo "[fixups] Launcher3 SystemUiProxy already has injectDoublePress"
+
+# Launcher3 files outside SystemUiProxy that implement ISystemUiProxy would need the same.
+if grep -rl "implements ISystemUiProxy" packages/apps/Launcher3 --include=*.java | grep -v "quickstep/src/com/android/quickstep/SystemUiProxy.java"; then
+  echo "[fixups] note: other ISystemUiProxy implementers listed above"
 fi
 
 echo "[fixups] completed Android 15 source-tree fixups"
