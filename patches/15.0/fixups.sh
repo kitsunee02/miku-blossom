@@ -63,44 +63,58 @@ require_file "hardware/google/aemu/Android.bp"
 require_file "hardware/google/gfxstream/Android.bp"
 require_module "hardware/google/gfxstream/host/Android.bp" "libgfxstream_backend"
 
-# Hsin SystemUI's ISystemUiProxy (inherited from Miku/Lineage) has extra methods,
-# injectLongPress(int) and injectDoublePress(int). Stock AOSP Launcher3 (swapped in for
-# the Miku launcher) does not implement them, so Launcher3QuickStepLib fails to compile
-# (javac reports only the first missing one). Add forwarding methods when missing.
+# Hsin SystemUI's ISystemUiProxy (inherited from Miku/Lineage) has methods that stock AOSP
+# Launcher3 (swapped in for the Miku launcher) does not implement, which breaks
+# Launcher3QuickStepLib (javac reports only the first missing one, so doing this one method at
+# a time cost whole build runs). Generate forwarding methods for EVERY aidl method the
+# Launcher3 SystemUiProxy lacks, so any further Hsin-side additions are covered too.
 LSUP="packages/apps/Launcher3/quickstep/src/com/android/quickstep/SystemUiProxy.java"
+LAIDL="frameworks/base/packages/SystemUI/shared/src/com/android/systemui/shared/recents/ISystemUiProxy.aidl"
 require_file "$LSUP"
-python3 - "$LSUP" <<'PY'
+require_file "$LAIDL"
+python3 - "$LSUP" "$LAIDL" <<'PY'
 import re, sys
-p = sys.argv[1]
+p, aidl = sys.argv[1], sys.argv[2]
 s = open(p).read()
+a = re.sub(r"/\*.*?\*/|//[^\n]*", "", open(aidl).read(), flags=re.S)
 m = re.search(r"public class SystemUiProxy implements [^{]*\{\n", s)
 if not m or "mSystemUiProxy" not in s:
     sys.exit("::error::SystemUiProxy class anchor or mSystemUiProxy not found in " + p)
-add = ""
-for name in ("injectLongPress", "injectDoublePress"):
-    if name in s:
-        print("[fixups] Launcher3 SystemUiProxy already has " + name)
+prims = {"int", "long", "float", "double", "boolean", "byte", "short", "char", "String", "CharSequence"}
+add, bad = "", []
+for mm in re.finditer(r"(?:oneway\s+)?void\s+(\w+)\s*\(([^)]*)\)\s*=\s*\d+\s*;", a):
+    name, raw = mm.group(1), mm.group(2).strip()
+    if re.search(r"\bvoid\s+" + name + r"\s*\(", s) or re.search(r"public\s+\w+\s+" + name + r"\s*\(", s):
         continue
+    params = []
+    for part in [x.strip() for x in raw.split(",") if x.strip()]:
+        part = re.sub(r"^(in|out|inout)\s+", "", part)
+        t, n = part.rsplit(None, 1)
+        base = t.replace("[]", "")
+        if base not in prims and not re.search(r"import\s+[\w.]+\." + re.escape(base) + r";", s):
+            bad.append(name + ": " + t)
+        params.append((t, n))
+    sig = ", ".join(t + " " + n for t, n in params)
+    call = ", ".join(n for _, n in params)
     add += """
     @Override
-    public void %s(int keyCode) {
+    public void %s(%s) {
         if (mSystemUiProxy != null) {
             try {
-                mSystemUiProxy.%s(keyCode);
+                mSystemUiProxy.%s(%s);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed call %s", e);
             }
         }
     }
-""" % (name, name, name)
-    print("[fixups] adding " + name + " to Launcher3 SystemUiProxy")
+""" % (name, sig, name, call, name)
+    print("[fixups] adding " + name + "(" + sig + ") to Launcher3 SystemUiProxy")
+if bad:
+    sys.exit("::error::missing imports for generated SystemUiProxy methods: " + "; ".join(bad))
 if add:
     open(p, "w").write(s[:m.end()] + add + s[m.end():])
+else:
+    print("[fixups] Launcher3 SystemUiProxy already implements every ISystemUiProxy method")
 PY
-
-# Launcher3 files outside SystemUiProxy that implement ISystemUiProxy would need the same.
-if grep -rl "implements ISystemUiProxy" packages/apps/Launcher3 --include=*.java | grep -v "quickstep/src/com/android/quickstep/SystemUiProxy.java"; then
-  echo "[fixups] note: other ISystemUiProxy implementers listed above"
-fi
 
 echo "[fixups] completed Android 15 source-tree fixups"
