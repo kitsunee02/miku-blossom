@@ -3,6 +3,7 @@
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 cd "$SRC"
+[[ -d out ]] || { echo "[pack] no out/ to pack"; exit 0; }
 find . -mindepth 1 -maxdepth 1 ! -name out -exec rm -rf {} +
 rm -f out/error.log out/verbose.log* out/soong.log 2>/dev/null || true
 mkdir -p "$ROM_ROOT/parts"

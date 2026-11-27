@@ -170,25 +170,26 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      - name: Pack out/ for next stage
+        if: steps.result.outputs.status == 'timeout' || steps.result.outputs.status == 'failed'
+        run: hsin-blossom-ci/scripts/pack-out.sh
+
+      - name: Upload out/ for next stage
+        if: steps.result.outputs.status == 'timeout' || steps.result.outputs.status == 'failed'
+        uses: actions/upload-artifact@v7
+        with:
+          name: out-stage-${{ inputs.stage }}
+          path: /home/runner/rom/parts
+          compression-level: 0
+          retention-days: 3
+          if-no-files-found: ignore
+
       - name: Fail on build error
         if: steps.result.outputs.status == 'failed'
         run: |
           tail -n 200 "$ROM_ROOT/src/out/error.log" 2>/dev/null || true
           echo "::error::HsinOS build failed. See error-log-stage-$STAGE."
           exit 1
-
-      - name: Pack out/ for next stage
-        if: steps.result.outputs.status == 'timeout'
-        run: hsin-blossom-ci/scripts/pack-out.sh
-
-      - name: Upload out/ for next stage
-        if: steps.result.outputs.status == 'timeout'
-        uses: actions/upload-artifact@v7
-        with:
-          name: out-stage-${{ inputs.stage }}
-          path: /home/runner/rom/parts
-          compression-level: 0
-          retention-days: 2
 
       - name: Collect HsinOS package
         if: steps.result.outputs.status == 'done'

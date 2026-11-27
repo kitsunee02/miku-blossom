@@ -117,4 +117,13 @@ else:
     print("[fixups] Launcher3 SystemUiProxy already implements every ISystemUiProxy method")
 PY
 
+# Jayedkhan800's lineage-22 sepolicy_vndr still has `allow vold iso9660:filesystem unmount;`,
+# but the iso9660 type no longer exists in AOSP 15 sepolicy, so checkpolicy fails building
+# vendor_sepolicy.cil.raw. LineageOS's own sepolicy_vndr dropped the rule.
+VOLD_TE="device/mediatek/sepolicy_vndr/basic/non_plat/vold.te"
+if [[ -f "$VOLD_TE" ]] && grep -q "iso9660" "$VOLD_TE"; then
+  sed -i '/iso9660/d' "$VOLD_TE"
+  echo "[fixups] removed obsolete iso9660 rule from $VOLD_TE"
+fi
+
 echo "[fixups] completed Android 15 source-tree fixups"
