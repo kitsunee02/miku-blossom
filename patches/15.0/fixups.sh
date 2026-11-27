@@ -73,9 +73,9 @@ if ! grep -q "injectDoublePress" "$LSUP"; then
 import re, sys
 p = sys.argv[1]
 s = open(p).read()
-m = re.search(r"    @Override\n    public void injectLongPress\(int keyCode\) \{.*?\n    \}\n", s, re.S)
-if not m:
-    sys.exit("::error::injectLongPress not found in " + p)
+m = re.search(r"public class SystemUiProxy implements [^{]*\{\n", s)
+if not m or "mSystemUiProxy" not in s:
+    sys.exit("::error::SystemUiProxy class anchor or mSystemUiProxy not found in " + p)
 add = """
     @Override
     public void injectDoublePress(int keyCode) {
