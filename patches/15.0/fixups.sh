@@ -126,4 +126,15 @@ if [[ -f "$VOLD_TE" ]] && grep -q "iso9660" "$VOLD_TE"; then
   echo "[fixups] removed obsolete iso9660 rule from $VOLD_TE"
 fi
 
+# The OTA passed unsparse_super_empty.img to update_dynamic_partitions, which makes the updater
+# rewrite the super metadata; OrangeFox on blossom/dandelion fails that step (error 25). The
+# working Miku zip has no super_empty image (one-argument update_dynamic_partitions), so do not
+# build one. Proper home: the device tree's device.mk.
+DT_MK="device/xiaomi/blossom/device.mk"
+if [[ -f "$DT_MK" ]] && ! grep -q "PRODUCT_BUILD_SUPER_EMPTY_IMAGE" "$DT_MK"; then
+  sed -i '/^PRODUCT_BUILD_SUPER_PARTITION := false/a PRODUCT_BUILD_SUPER_EMPTY_IMAGE := false' "$DT_MK"
+  grep -q "PRODUCT_BUILD_SUPER_EMPTY_IMAGE" "$DT_MK" || { echo "::error::could not add PRODUCT_BUILD_SUPER_EMPTY_IMAGE to $DT_MK"; exit 1; }
+  echo "[fixups] set PRODUCT_BUILD_SUPER_EMPTY_IMAGE := false in $DT_MK"
+fi
+
 echo "[fixups] completed Android 15 source-tree fixups"
